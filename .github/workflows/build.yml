@@ -1,4 +1,4 @@
-﻿name: build-apk
+name: build-apk
 
 on:
   workflow_dispatch:
@@ -29,6 +29,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Resolve package version from tag
+        id: ver
+        run: |
+          set -eu
+          ref="${GITHUB_REF_NAME#v}"
+          case "$ref" in
+            *-r*) echo "ver=${ref%%-r*}" >> "$GITHUB_OUTPUT"; echo "rel=${ref##*-r}" >> "$GITHUB_OUTPUT" ;;
+            *)    echo "ver=4.2.1" >> "$GITHUB_OUTPUT"; echo "rel=1" >> "$GITHUB_OUTPUT" ;;
+          esac
+
       - uses: actions/setup-go@v5
         with:
           go-version: "1.27.x"
@@ -47,10 +57,13 @@ jobs:
           install -m 0755 sbin/apk.static tools/apk.static
 
       - name: Build usque APK
+        env:
+          USQUE_VERSION: ${{ steps.ver.outputs.ver }}
+          USQUE_RELEASE: ${{ steps.ver.outputs.rel }}
         run: sh tools/build-usque-apk.sh ${{ matrix.goarch }} ${{ matrix.arch }}
 
       - name: Verify APK
-        run: sh tools/verify-apk.sh usque "dist/usque-4.2.1-r1.${{ matrix.arch }}.apk"
+        run: sh tools/verify-apk.sh usque "dist/usque-${{ steps.ver.outputs.ver }}-r${{ steps.ver.outputs.rel }}.${{ matrix.arch }}.apk"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -83,7 +96,10 @@ jobs:
         run: sh tools/build-luci-apk.sh noarch
 
       - name: Verify APK
-        run: sh tools/verify-apk.sh luci dist/luci-app-usque-1.1.1-r1.noarch.apk
+        run: |
+          set -- dist/luci-app-usque-*.apk
+          [ $# -eq 1 ] || { echo "expected exactly one luci apk, got $#"; exit 1; }
+          sh tools/verify-apk.sh luci "$1"
 
       - uses: actions/upload-artifact@v4
         with:

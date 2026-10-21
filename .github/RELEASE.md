@@ -1,14 +1,19 @@
-﻿# usque-openwrt release
+# usque-openwrt release
 
 OpenWrt 25.x 的 usque（Cloudflare WARP / MASQUE）客户端与 LuCI 界面，预编译为 APK。
 
 ## 文件
 
 - `usque-<ver>.r<rel>.<arch>.apk` — 服务端：二进制、procd 服务、路由钩子、UCI 配置
-- `luci-app-usque-<ver>.r<rel>.all.apk` — LuCI 页面、`luci.usque` ubus API、中文翻译
+- `luci-app-usque-<ver>.r<rel>.noarch.apk` — LuCI 页面、`luci.usque` ubus API、中文翻译
 - `SHA256SUMS`
 
-`<arch>` 与路由器 `apk info --print-arch` 一致；LuCI 包为 `all`。包未签名，安装需 `--allow-untrusted`。
+`<arch>` 与路由器 `apk info --print-arch` 一致；LuCI 包为 `noarch`。包未签名，安装需 `--allow-untrusted`。
+
+## 本次变更
+
+- 修复安装后 LuCI 一直显示「未找到 usque 可执行文件」：ubus 对象 `luci.usque` 只在 rpcd 启动时加载，新增 post-install 自动重启 rpcd
+- 修复固件缺少 `timeout` 命令时后端全部失效（版本、启停、注册、路由都返回 127）：改为按需探测，无 `timeout` 也能运行
 
 ## 安装
 
