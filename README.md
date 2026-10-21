@@ -10,7 +10,7 @@
 
 ## 安装（发布包）
 
-从 [Releases](../../releases) 按路由器架构下载，然后：
+从 [Releases](https://github.com/xin-521/usque-openwrt/releases) 按路由器架构下载，然后：
 
 ```sh
 apk add --allow-untrusted ./usque-*.apk ./luci-app-usque-*.apk
