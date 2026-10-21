@@ -20,7 +20,7 @@ ROOT=$(cd "$HERE/.." && pwd)
 SRC="$ROOT/luci-app-usque"
 
 NAME=luci-app-usque
-VER=1.1.1
+VER=1.1.2
 REL=1
 # apk v3 uses "noarch" for architecture-independent packages; "all" is not
 # a valid apk arch and makes the package uninstallable.
@@ -71,6 +71,17 @@ chmod 755 "$PKG/usr/share/rpcd/ucode/luci.usque"
 chmod 755 "$PKG/etc/uci-defaults/95-luci-app-usque"
 chmod 644 "$PKG"/usr/share/luci/menu.d/*.json "$PKG"/usr/share/rpcd/acl.d/*.json
 
+# 4b) post-install：rpcd 只在启动时加载 /usr/share/rpcd/ucode/*，
+#     不重启的话 luci.usque 这个 ubus 对象根本不存在，界面会报
+#     「未找到 usque 可执行文件」（实际是 ubus 调用 Not found）。
+mkdir -p "$STAGE/scripts"
+cat > "$STAGE/scripts/post-install" <<'EOS'
+#!/bin/sh
+[ -x /etc/init.d/rpcd ] && /etc/init.d/rpcd restart >/dev/null 2>&1
+exit 0
+EOS
+chmod 755 "$STAGE/scripts/post-install"
+
 MODEBAD=0
 for f in usr/share/rpcd/ucode/luci.usque etc/uci-defaults/95-luci-app-usque; do
 	[ -x "$PKG/$f" ] || { echo "[!] 缺少可执行位：/$f" >&2; MODEBAD=1; }
@@ -97,6 +108,7 @@ RM_OUT=0
 	--info "depends:rpcd-mod-ucode" \
 	--info "depends:ucode-mod-fs" \
 	--info "depends:usque" \
+	--script "post-install:$STAGE/scripts/post-install" \
 	--files "$PKG" \
 	--output "$OUT"
 

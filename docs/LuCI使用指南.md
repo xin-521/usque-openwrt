@@ -133,7 +133,7 @@ ubus 调用见 [`luci-app-usque/README.md`](../luci-app-usque/README.md#ubus-api
 | 现象 | 处理 |
 |------|------|
 | 菜单不出现 | 两个包都装了吗；`/etc/init.d/rpcd restart` 并强刷浏览器 |
-| `usque binary not found` | 重装 `usque` 包，确认 `/usr/bin/usque` 可执行 |
+| `usque binary not found` | 先 `which usque`：存在则 `/etc/init.d/rpcd restart`（rpcd 只在启动时加载 `/usr/share/rpcd/ucode/luci.usque`，不重启时 ubus 对象 `luci.usque` 不存在，界面任何状态都取不到）；不存在再重装 `usque` 包并确认 `/usr/bin/usque` 可执行 |
 | 注册失败 `config-exists` | 勾 Overwrite，或先备份再删旧配置 |
 | 服务启动即退 | 看 Logs；确认已注册、`kmod-tun` 已加载（`lsmod \| grep tun`） |
 | 有接口但无法上网 | 查 IPv4 default route 是否指向隧道；先关 Strict 再试 |

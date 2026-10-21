@@ -27,6 +27,17 @@ const AUTOSTART = '/etc/rc.d/S95usque';
 /* helpers                                                                    */
 /* ------------------------------------------------------------------------- */
 
+// Not every OpenWrt build ships a `timeout` command (busybox may omit the
+// applet and coreutils-timeout may not be installed). Prefixing commands with
+// a missing `timeout` makes them fail with 127, so probe once at load time.
+const TIMEOUT_BIN =
+	access('/usr/bin/timeout', 'x') ? '/usr/bin/timeout' :
+	access('/bin/timeout', 'x') ? '/bin/timeout' : '';
+
+function tmo(seconds, cmd) {
+	return TIMEOUT_BIN != '' ? TIMEOUT_BIN + ' ' + seconds + ' ' + cmd : cmd;
+}
+
 function run(cmd) {
 	let fd = popen(cmd);
 	if (!fd)
@@ -135,7 +146,7 @@ function binary_info() {
 		return info;
 	}
 
-	let r = run('timeout 5 ' + PROG + ' version 2>/dev/null');
+	let r = run(tmo(5, PROG + ' version 2>/dev/null'));
 	let lines = split(trim(r.out), '\n');
 
 	for (let i = 0; i < length(lines); i++) {
@@ -314,7 +325,7 @@ function trace_egress(iface) {
 	if (tool == null)
 		return { ok: false, error: 'no-http-client' };
 
-	let cmd = 'timeout 20 ' + tool;
+	let cmd = tmo(20, tool);
 	if (iface != '' && index(tool, 'curl') > 0)
 		cmd += ' --interface ' + shellquote(iface);
 	cmd += ' https://www.cloudflare.com/cdn-cgi/trace 2>&1';
@@ -387,7 +398,7 @@ const methods = {
 					return { ok: false, error: 'service-disabled' };
 			}
 
-			let r = run('timeout 25 ' + INIT + ' ' + sub + ' 2>&1');
+			let r = run(tmo(25, INIT + ' ' + sub + ' 2>&1'));
 
 			return {
 				ok: r.code == 0,
@@ -408,7 +419,7 @@ const methods = {
 			if (!access(ROUTING, 'x'))
 				return { ok: false, error: 'routing-helper-missing' };
 
-			let r = run('timeout 28 ' + ROUTING + ' ' + action + ' 2>&1');
+			let r = run(tmo(28, ROUTING + ' ' + action + ' 2>&1'));
 
 			return {
 				ok: r.code == 0,
@@ -463,9 +474,9 @@ const methods = {
 					return { ok: false, error: 'backup-failed', output: mv.out };
 			}
 
-			let cmd = 'timeout 25 ' + PROG +
+			let cmd = tmo(25, PROG +
 				' -c ' + shellquote(path) +
-				' register -n ' + shellquote(name) + ' -a';
+				' register -n ' + shellquote(name) + ' -a');
 			if (jwt != '')
 				cmd += ' --jwt ' + shellquote(jwt);
 			cmd += ' 2>&1';
@@ -507,7 +518,7 @@ const methods = {
 			if (!access(path, 'r'))
 				return { ok: false, error: 'no-config' };
 
-			let cmd = 'timeout 25 ' + PROG + ' -c ' + shellquote(path) + ' account ' + action;
+			let cmd = tmo(25, PROG + ' -c ' + shellquote(path) + ' account ' + action);
 			if (action == 'set')
 				cmd += ' ' + shellquote(key);
 			cmd += ' 2>&1';
