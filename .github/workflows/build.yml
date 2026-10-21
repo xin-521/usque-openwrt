@@ -49,6 +49,9 @@ jobs:
       - name: Build usque APK
         run: sh tools/build-usque-apk.sh ${{ matrix.goarch }} ${{ matrix.arch }}
 
+      - name: Verify APK
+        run: sh tools/verify-apk.sh usque "dist/usque-4.2.1-r1.${{ matrix.arch }}.apk"
+
       - uses: actions/upload-artifact@v4
         with:
           name: usque-${{ matrix.arch }}
@@ -78,6 +81,9 @@ jobs:
 
       - name: Build LuCI APK
         run: sh tools/build-luci-apk.sh all
+
+      - name: Verify APK
+        run: sh tools/verify-apk.sh luci dist/luci-app-usque-1.1.0-r1.all.apk
 
       - uses: actions/upload-artifact@v4
         with:
