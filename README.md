@@ -5,8 +5,7 @@
 
 - `usque/` — 服务端包（预编译二进制 + init + 钩子 + `usque-routing`）
 - `luci-app-usque/` — LuCI 包（页面、`luci.usque` ubus API、中文翻译）
-- `deploy/` — 无 LuCI 的命令行部署/回滚（含架构探测、arm64 调优）
-- `docs/行动指南.md` — 完整部署、排障与回滚
+- `docs/LuCI使用指南.md` — 安装、注册、路由、排障与卸载
 
 ## 安装（发布包）
 
@@ -29,6 +28,10 @@ APK_STATIC=/path/to/apk.static sh tools/build-luci-apk.sh all
 ```
 
 CI（`.github/workflows/build.yml`）在 `v*` 标签上构建三个架构并发布 Release。
+
+## 使用
+
+界面用法见 [`docs/LuCI使用指南.md`](docs/LuCI使用指南.md)。
 
 ## 说明
 

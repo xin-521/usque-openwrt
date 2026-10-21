@@ -18,7 +18,7 @@ apk add --allow-untrusted ./usque-*.apk ./luci-app-usque-*.apk
 rm -rf /tmp/luci-*
 ```
 
-然后打开 LuCI「网络 → usque」注册设备并启用服务。命令行部署方式见仓库 `deploy/` 与 `docs/行动指南.md`。
+然后打开 LuCI「服务 → Usque WARP」注册设备，并按 `docs/LuCI使用指南.md` 配置。
 
 ## 校验
 

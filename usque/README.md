@@ -81,12 +81,7 @@ usque -c /etc/usque/config.json register -n openwrt-router -a
 - 钩子从环境变量读取 `USQUE_IFACE`、`USQUE_ENDPOINT`、`USQUE_TUN_METRIC`、
   `USQUE_WAN_METRIC`；init 会把 UCI 的 metric 传给钩子。
 
-## 与命令行部署的关系
+## 目录
 
-`deploy/install-on-router.sh` 仍是纯命令行部署路径（会复制文件并直接改
-network/firewall/dhcp）。两种方式二选一；若先装包再跑旧脚本，init 会被本包
-同源的 init 覆盖，二者一致。
-
-本目录的 `root/etc/usque/`、`root/etc/init.d/usque`、`root/etc/sysctl.d/`
-是钩子与 init 的唯一源；`deploy/` 不再保留副本。`tools/make-bundle.sh`
-生成发布包时会把它们平铺到 `deploy/` 下（保持旧包布局）。
+`root/etc/usque/`、`root/etc/init.d/usque`、`root/etc/sysctl.d/` 是钩子、
+init 与 sysctl 的唯一源，打包时直接进 APK。

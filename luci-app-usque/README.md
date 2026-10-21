@@ -64,13 +64,12 @@ rm -rf /tmp/luci-*
 > Windows 原生 Git Bash 无法保留无扩展名 ELF 的可执行位，打包脚本会报错；
 > 这是刻意保护，避免装出 `Permission denied` 的服务。
 
-## 安装顺序与冲突
+## 安装顺序
 
 1. 安装 `usque` 包（二进制 + `/etc/init.d/usque` + 钩子 + `/etc/config/usque`）。
 2. 安装 `luci-app-usque`，首次启动会执行 `/etc/uci-defaults/95-luci-app-usque`，
    在二进制存在时 `enable` 服务。
-3. 旧的 `deploy/install-on-router.sh` 仍可用于纯命令行部署，但它会覆盖
-   `/etc/init.d/usque`；之后请重新安装 `usque` 包（或从包内拷贝 init）。
+3. 装完按 [`docs/LuCI使用指南.md`](../docs/LuCI使用指南.md)。
 
 ## ubus API（`luci.usque`）
 
@@ -96,8 +95,8 @@ ubus call luci.usque stat '{}'
   旧文件改名为 `config.json.bak`，失败自动还原；没有旧配置时失败会删除半成品。
 - 设备名白名单 `[A-Za-z0-9._-]`（≤64）；JWT 只允许 `[A-Za-z0-9._-]`；
   许可密钥 `[A-Za-z0-9-]`（8–64）；接口名、配置路径均做白名单校验。
-- `routing apply` 与 `deploy/install-on-router.sh` 第 2–4 步等价，并额外重载
-  dnsmasq；参数全部来自 UCI，浏览器不传命令。
+- `routing apply` 安装 warp 接口、路由优先级、防火墙与 DNS 上游，并重载
+  network/firewall/dnsmasq；参数全部来自 UCI，浏览器不传命令。
 - `routing revert` 先停 usque，再删除 warp 接口、防火墙、DNS 的 UCI 条目并
   重载 network/firewall/dnsmasq。
 

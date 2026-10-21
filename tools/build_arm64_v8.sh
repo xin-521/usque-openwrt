@@ -17,7 +17,7 @@
 #
 #  用法： sh tools/build_arm64_v8.sh
 #         PGO=1 sh tools/build_arm64_v8.sh   # 有 default.pgo 时启用 PGO
-#  产物： dist/bin/usque-linux-arm64     （与 install-on-router.sh 的自动选包名一致）
+#  产物： dist/bin/usque-linux-arm64
 # =============================================================================
 set -e
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -92,5 +92,5 @@ else SUM=$(shasum -a 256 "$BIN" | cut -d' ' -f1); fi
 echo "==> OK  $BIN  ${SIZE} bytes  sha256=${SUM}"
 echo "$INFO" | grep -E 'GOARM64|CGO_ENABLED|vcs.revision' | sed 's/^/    /'
 echo
-echo "下一步： sh tools/make-bundle.sh arm64"
+echo "下一步： sh tools/build-usque-apk.sh arm64 aarch64_cortex-a53"
 echo "说明：  PGO 需要真实流量画像（default.pgo）。没有就保持默认，别用假画像。"
