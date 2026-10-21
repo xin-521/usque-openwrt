@@ -5,3 +5,5 @@ dist/SHA256SUMS*
 usque/files/usque-linux-*
 tools/apk.static
 *.exe
+dist/bin/usque-linux-*
+!dist/bin/usque-linux-arm64

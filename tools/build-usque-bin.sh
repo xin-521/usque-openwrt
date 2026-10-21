@@ -32,12 +32,17 @@ import struct, sys
 d = open(sys.argv[1], "rb").read()
 want = int(sys.argv[2])
 assert d[:4] == b"\x7fELF", "not ELF"
+elfclass = d[4]
 e_type, e_machine = struct.unpack_from("<HH", d, 16)
-phoff, = struct.unpack_from("<Q", d, 32)
-phentsize, phnum = struct.unpack_from("<HH", d, 54)
+if elfclass == 2:
+    phoff, = struct.unpack_from("<Q", d, 32)
+    phentsize, phnum = struct.unpack_from("<HH", d, 54)
+else:
+    phoff, = struct.unpack_from("<I", d, 28)
+    phentsize, phnum = struct.unpack_from("<HH", d, 42)
 interp = any(struct.unpack_from("<I", d, phoff + i * phentsize)[0] == 3 for i in range(phnum))
 assert e_type == 2, "still PIE"
 assert not interp, "has PT_INTERP (not static)"
 assert e_machine == want, "wrong e_machine %d" % e_machine
-print("ELF OK machine=%d size=%d" % (e_machine, len(d)))
+print("ELF OK class=%d machine=%d size=%d" % (elfclass, e_machine, len(d)))
 PY

@@ -73,8 +73,8 @@ jobs:
       - name: Build po2lmo
         run: |
           git clone --depth 1 https://github.com/openwrt/luci /tmp/luci
-          gcc -O2 -o /tmp/po2lmo /tmp/luci/modules/luci-base/src/po2lmo.c
-          sudo install -m 0755 /tmp/po2lmo /usr/local/bin/po2lmo
+          make -C /tmp/luci/modules/luci-base/src po2lmo
+          sudo install -m 0755 /tmp/luci/modules/luci-base/src/po2lmo /usr/local/bin/po2lmo
 
       - name: Build LuCI APK
         run: sh tools/build-luci-apk.sh all
