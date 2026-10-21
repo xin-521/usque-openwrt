@@ -1,0 +1,7 @@
+temp/
+dist/*.apk
+dist/*.tar.gz
+dist/SHA256SUMS*
+usque/files/usque-linux-*
+tools/apk.static
+*.exe

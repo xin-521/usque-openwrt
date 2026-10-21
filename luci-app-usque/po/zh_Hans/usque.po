@@ -1,0 +1,407 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: luci-app-usque 1.0.0\n"
+"Language: zh_Hans\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "%s (%s)"
+msgstr "%s（%s）"
+
+msgid "A configuration already exists. Tick \"Overwrite\" to replace it."
+msgstr "配置已存在。勾选“覆盖”后再试。"
+
+msgid "Account"
+msgstr "账户"
+
+msgid "Account info"
+msgstr "账户信息"
+
+msgid "Always reconnect"
+msgstr "始终重连"
+
+msgid "Apply routing"
+msgstr "应用路由"
+
+msgid "Check egress"
+msgstr "检测出口"
+
+msgid "Check failed: %s"
+msgstr "检测失败：%s"
+
+msgid "Checking…"
+msgstr "检测中…"
+
+msgid "Command \"%s\" executed."
+msgstr "命令“%s”已执行。"
+
+msgid "Command failed: %s"
+msgstr "命令失败：%s"
+
+msgid "Configuration file"
+msgstr "配置文件"
+
+msgid "Configuration of the usque nativetun daemon. Saving commits /etc/config/usque and reloads the service through procd."
+msgstr "usque nativetun 守护进程配置。保存会提交 /etc/config/usque，并由 procd 重载服务。"
+
+msgid "Connect port"
+msgstr "连接端口"
+
+msgid "Create the warp zone, LAN to warp forwarding and NAT rules when routing is applied."
+msgstr "应用路由时创建 warp 区域、LAN→warp 转发与 NAT 规则。"
+
+msgid "default"
+msgstr "默认"
+
+msgid "Device credentials written by usque register. Contains private keys; keep it private."
+msgstr "usque register 写入的设备凭证，包含私钥，请妥善保管。"
+
+msgid "Device name"
+msgstr "设备名称"
+
+msgid "Device name may only contain letters, digits, dot, dash and underscore."
+msgstr "设备名只能包含字母、数字、点、短横线和下划线。"
+
+msgid "Devices"
+msgstr "设备列表"
+
+msgid "Disable certificate pinning"
+msgstr "关闭证书固定"
+
+msgid "Disable IPv4 inside the tunnel"
+msgstr "隧道内禁用 IPv4"
+
+msgid "Disable IPv6 inside the tunnel"
+msgstr "隧道内禁用 IPv6"
+
+msgid "Disable on boot"
+msgstr "取消开机自启"
+
+msgid "Disabled"
+msgstr "未启用"
+
+msgid "DNS server"
+msgstr "DNS 服务器"
+
+msgid "Done."
+msgstr "完成。"
+
+msgid "Down"
+msgstr "已关闭"
+
+msgid "Egress check"
+msgstr "出口检测"
+
+msgid "Egress self-test"
+msgstr "出口自检"
+
+msgid "Enable on boot"
+msgstr "开机自启"
+
+msgid "Enable service"
+msgstr "启用服务"
+
+msgid "Enabled"
+msgstr "已启用"
+
+msgid "Existing configuration"
+msgstr "现有配置"
+
+msgid "Failed: %s"
+msgstr "失败：%s"
+
+msgid "Fetches https://www.cloudflare.com/cdn-cgi/trace and shows the public IP and WARP state. Requires curl or uclient-fetch."
+msgstr "访问 https://www.cloudflare.com/cdn-cgi/trace 并显示公网 IP 与 WARP 状态，需要 curl 或 uclient-fetch。"
+
+msgid "Installs the warp interface, default route priority, firewall zone and DNS upstream from the saved settings."
+msgstr "按已保存的设置安装 warp 接口、默认路由优先级、防火墙区域与 DNS 上游。"
+
+msgid "Interface"
+msgstr "接口"
+
+msgid "Interface name"
+msgstr "接口名称"
+
+msgid "IPv4 default route"
+msgstr "IPv4 默认路由"
+
+msgid "IPv6 default route"
+msgstr "IPv6 默认路由"
+
+msgid "Keepalive period (seconds)"
+msgstr "保活周期（秒）"
+
+msgid "License key"
+msgstr "许可密钥"
+
+msgid "Logs"
+msgstr "日志"
+
+msgid "Manage DNS"
+msgstr "托管 DNS"
+
+msgid "Manage firewall"
+msgstr "托管防火墙"
+
+msgid "Master switch. When disabled, procd will not start usque even if autostart is enabled."
+msgstr "总开关。关闭后即使已设置开机自启，procd 也不会启动 usque。"
+
+msgid "Metric of the default route installed by the connect hook. Must be lower than the WAN metric."
+msgstr "连接钩子安装的默认路由 metric，必须小于 WAN metric。"
+
+msgid "Metric of the physical WAN default route. Higher means the tunnel wins while it is up."
+msgstr "物理 WAN 默认路由的 metric，数值越大，隧道在线时越优先走隧道。"
+
+msgid "Missing"
+msgstr "不存在"
+
+msgid "missing, register first"
+msgstr "不存在，请先注册"
+
+msgid "MTU"
+msgstr "MTU"
+
+msgid "Name of the TUN interface. Keep warp0 unless it conflicts with another interface."
+msgstr "TUN 接口名。除非与其他接口冲突，否则保持 warp0。"
+
+msgid "Neither curl nor uclient-fetch is installed."
+msgstr "未安装 curl 或 uclient-fetch。"
+
+msgid "No configuration file found. Register first."
+msgstr "未找到配置文件，请先注册。"
+
+msgid "No log entries."
+msgstr "暂无日志。"
+
+msgid "none"
+msgstr "无"
+
+msgid "not through tunnel"
+msgstr "未经过隧道"
+
+msgid "Optional -s value. A harmless SNI such as www.bing.com can help against DPI."
+msgstr "可选的 -s 值。使用 www.bing.com 之类的无害 SNI 有助于对抗 DPI。"
+
+msgid "Overwrite it (a .bak copy is kept)"
+msgstr "覆盖它（保留 .bak 备份）"
+
+msgid "Pass --always-reconnect so the tunnel is re-established even when idle."
+msgstr "传入 --always-reconnect，空闲时也会保持重连。"
+
+msgid "Pass --http2 to use TCP+TLS instead of QUIC when UDP/443 is blocked."
+msgstr "传入 --http2，UDP/443 被封时改用 TCP+TLS。"
+
+msgid "Pass --insecure. Troubleshooting only: it removes protection against man-in-the-middle attacks."
+msgstr "传入 --insecure。仅用于排障：会失去对中间人攻击的防护。"
+
+msgid "Pass --no-tunnel-ipv4."
+msgstr "传入 --no-tunnel-ipv4。"
+
+msgid "Pass --no-tunnel-ipv6."
+msgstr "传入 --no-tunnel-ipv6。"
+
+msgid "Pass -6 to connect to the WARP endpoint over IPv6."
+msgstr "传入 -6，通过 IPv6 连接 WARP 端点。"
+
+msgid "Passed as --keepalive-period. Shorten it if NAT drops idle connections."
+msgstr "作为 --keepalive-period 传入。NAT 会断开空闲连接时请调小。"
+
+msgid "Passed as --reconnect-delay."
+msgstr "作为 --reconnect-delay 传入。"
+
+msgid "Physical (WAN) default route"
+msgstr "物理（WAN）默认路由"
+
+msgid "PID"
+msgstr "进程号"
+
+msgid "Point the dnsmasq upstream at the tunnel to avoid DNS leaks when routing is applied."
+msgstr "启用“托管 DNS”时，将 dnsmasq 上游指向隧道以避免 DNS 泄漏。"
+
+msgid "present"
+msgstr "存在"
+
+msgid "Present"
+msgstr "存在"
+
+msgid "Reconnect delay (seconds)"
+msgstr "重连间隔（秒）"
+
+msgid "Refresh"
+msgstr "刷新"
+
+msgid "Register"
+msgstr "注册"
+
+msgid "Registering, please wait…"
+msgstr "正在注册，请稍候…"
+
+msgid "Registers a new WARP device and writes the configuration file. Internet access to api.cloudflareclient.com is required; this can take up to a minute."
+msgstr "注册新的 WARP 设备并写入配置文件。需要能访问 api.cloudflareclient.com，最长约一分钟。"
+
+msgid "Registration"
+msgstr "注册"
+
+msgid "Registration failed: %s"
+msgstr "注册失败：%s"
+
+msgid "Registration succeeded."
+msgstr "注册成功。"
+
+msgid "Remove the WAN default route entirely, so traffic never falls back to the ISP when the tunnel is down."
+msgstr "完全移除 WAN 默认路由，隧道断开时绝不回退到 ISP。"
+
+msgid "Requires network access and an existing configuration file."
+msgstr "需要网络访问，且已存在配置文件。"
+
+msgid "Reset license"
+msgstr "重置许可"
+
+msgid "Reset the license key?"
+msgstr "重置许可密钥？"
+
+msgid "Restart"
+msgstr "重启"
+
+msgid "Revert routing"
+msgstr "撤销路由"
+
+msgid "Revert routing? usque will be stopped and the warp interface, firewall and DNS entries will be removed."
+msgstr "撤销路由？usque 将停止，warp 接口、防火墙与 DNS 配置将被删除。"
+
+msgid "Routing action \"%s\" completed."
+msgstr "路由操作“%s”已完成。"
+
+msgid "Routing action failed: %s"
+msgstr "路由操作失败：%s"
+
+msgid "Running"
+msgstr "运行中"
+
+msgid "Service"
+msgstr "服务"
+
+msgid "Service control"
+msgstr "服务控制"
+
+msgid "Set license"
+msgstr "设置许可"
+
+msgid "Settings"
+msgstr "设置"
+
+msgid "Start"
+msgstr "启动"
+
+msgid "Start on boot"
+msgstr "开机自启"
+
+msgid "Status"
+msgstr "状态"
+
+msgid "Stop"
+msgstr "停止"
+
+msgid "Stop usque? The tunnel route will be removed and traffic may fall back to the WAN."
+msgstr "停止 usque？隧道路由将被移除，流量可能回退到 WAN。"
+
+msgid "Stopped"
+msgstr "已停止"
+
+msgid "Stopping the service removes the tunnel route; the WAN fallback route takes over."
+msgstr "停止服务会移除隧道路由，WAN 后备路由将自动接管。"
+
+msgid "Stops usque and removes the warp interface, firewall and DNS UCI entries created by Apply routing."
+msgstr "停止 usque 并删除“应用路由”创建的 warp 接口、防火墙与 DNS 的 UCI 配置。"
+
+msgid "Strict mode"
+msgstr "严格模式"
+
+msgid "Team token (JWT, optional)"
+msgstr "团队令牌（JWT，可选）"
+
+msgid "The configuration path is invalid."
+msgstr "配置路径无效。"
+
+msgid "The interface name is invalid."
+msgstr "接口名无效。"
+
+msgid "The license key format is invalid."
+msgstr "许可密钥格式不正确。"
+
+msgid "The routing helper /usr/libexec/usque-routing is missing."
+msgstr "路由助手 /usr/libexec/usque-routing 不存在。"
+
+msgid "The service is disabled in Settings. Enable it there first."
+msgstr "服务已在设置中禁用，请先在设置里启用。"
+
+msgid "The team token contains unsupported characters."
+msgstr "团队令牌包含不支持的字符。"
+
+msgid "The tunnel MTU; 1280 is the only supported value."
+msgstr "隧道 MTU，仅支持 1280。"
+
+msgid "The usque binary is not installed."
+msgstr "未安装 usque 可执行文件。"
+
+msgid "The usque init script is not installed."
+msgstr "未安装 usque 启动脚本。"
+
+msgid "through tunnel"
+msgstr "经过隧道"
+
+msgid "TLS SNI"
+msgstr "TLS SNI"
+
+msgid "Tunnel address"
+msgstr "隧道地址"
+
+msgid "Tunnel route metric"
+msgstr "隧道路由 metric"
+
+msgid "UDP/TCP port used for the MASQUE connection (443 by default)."
+msgstr "MASQUE 连接使用的 UDP/TCP 端口（默认 443）。"
+
+msgid "unknown"
+msgstr "未知"
+
+msgid "unknown error"
+msgstr "未知错误"
+
+msgid "Unsupported action."
+msgstr "不支持的操作。"
+
+msgid "Up"
+msgstr "已启用"
+
+msgid "Upstream server used when Manage DNS is enabled."
+msgstr "启用“托管 DNS”时使用的上游服务器。"
+
+msgid "Uptime"
+msgstr "运行时长"
+
+msgid "Use HTTP/2 over TCP"
+msgstr "使用 TCP 上的 HTTP/2"
+
+msgid "Use IPv6 endpoint"
+msgstr "使用 IPv6 端点"
+
+msgid "usque binary not found"
+msgstr "未找到 usque 可执行文件"
+
+msgid "Usque WARP"
+msgstr "Usque WARP"
+
+msgid "Version"
+msgstr "版本"
+
+msgid "WAN fallback metric"
+msgstr "WAN 后备 metric"
+
+msgid "Working…"
+msgstr "处理中…"
+
+msgid "Zero Trust team token"
+msgstr "Zero Trust 团队令牌"

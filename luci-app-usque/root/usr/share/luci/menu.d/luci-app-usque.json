@@ -1,0 +1,24 @@
+{
+	"admin/services/usque": {
+		"title": "Usque WARP",
+		"order": 90,
+		"action": {
+			"type": "view",
+			"path": "usque/overview"
+		},
+		"depends": {
+			"acl": [ "luci-app-usque" ]
+		}
+	},
+	"admin/services/usque/settings": {
+		"title": "Settings",
+		"order": 10,
+		"action": {
+			"type": "view",
+			"path": "usque/settings"
+		},
+		"depends": {
+			"acl": [ "luci-app-usque" ]
+		}
+	}
+}

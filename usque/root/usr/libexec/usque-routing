@@ -1,0 +1,150 @@
+#!/bin/sh
+# =============================================================================
+#  /usr/libexec/usque-routing  ——  apply / revert the routing side of usque
+#
+#  Called by the LuCI backend (ubus luci.usque routing {action}) only.
+#  Mirrors install-on-router.sh sections 2-4 so that the web UI and the
+#  command line installer produce exactly the same UCI configuration:
+#
+#    apply   WAN fallback metric (or strict mode), warp interface,
+#            firewall zone + LAN->warp forwarding + NAT, dnsmasq upstream.
+#    revert  undo all of the above, stop usque first.
+#
+#  All values come from UCI /etc/config/usque; no argument is taken from the
+#  browser, so there is no command injection surface here.
+# =============================================================================
+
+set -u
+
+IFACE=$(uci -q get usque.main.iface);          [ -n "$IFACE" ] || IFACE=warp0
+STRICT=$(uci -q get usque.main.strict);        [ -n "$STRICT" ] || STRICT=0
+MFW=$(uci -q get usque.main.manage_firewall);  [ -n "$MFW" ] || MFW=1
+MDNS=$(uci -q get usque.main.manage_dns);      [ -n "$MDNS" ] || MDNS=1
+WANM=$(uci -q get usque.main.wan_metric);      [ -n "$WANM" ] || WANM=250
+DNS=$(uci -q get usque.main.dns);              [ -n "$DNS" ] || DNS=1.1.1.1
+
+log() { logger -t usque-routing "$*"; }
+say() { echo "== $*"; }
+
+uci_del() {
+	local k
+	for k in "$@"; do
+		if uci -q get "$k" >/dev/null 2>&1; then
+			echo "  - delete $k"
+			uci -q delete "$k" || return 1
+		fi
+	done
+	return 0
+}
+
+service_running() {
+	[ -x /etc/init.d/usque ] || return 1
+	/etc/init.d/usque status >/dev/null 2>&1
+}
+
+apply() {
+	say "network: default route priority"
+	if [ "$STRICT" = 1 ]; then
+		echo "  strict mode: WAN produces no default route"
+		uci -q set network.wan.defaultroute=0 || return 1
+		uci -q get network.wan6 >/dev/null 2>&1 && uci -q set network.wan6.defaultroute=0
+	else
+		echo "  fallback mode: WAN default route metric=$WANM"
+		uci -q set network.wan.metric="$WANM" || return 1
+		uci_del network.wan.defaultroute || return 1
+	fi
+
+	uci -q set network.warp=interface || return 1
+	uci -q set network.warp.proto=none
+	uci -q set network.warp.device="$IFACE"
+	uci -q set network.warp.defaultroute=0
+	uci -q set network.warp.peerdns=0
+	uci -q set network.warp.auto=1
+	uci -q commit network || return 1
+
+	if [ "$MFW" = 1 ]; then
+		say "firewall: warp zone + LAN forwarding + NAT"
+		uci -q set firewall.warp=zone || return 1
+		uci -q set firewall.warp.name=warp
+		uci -q set firewall.warp.input=REJECT
+		uci -q set firewall.warp.output=ACCEPT
+		uci -q set firewall.warp.forward=REJECT
+		uci -q set firewall.warp.masq=1
+		uci -q set firewall.warp.masq6=1
+		uci -q set firewall.warp.mtu_fix=1
+		uci_del firewall.warp.network || return 1
+		uci -q add_list firewall.warp.network=warp
+		if command -v fw4 >/dev/null 2>&1; then
+			uci_del firewall.warp.device || return 1
+			uci -q add_list firewall.warp.device="$IFACE"
+		fi
+		uci -q set firewall.lan_warp=forwarding
+		uci -q set firewall.lan_warp.src=lan
+		uci -q set firewall.lan_warp.dest=warp
+		uci -q commit firewall || return 1
+	else
+		say "firewall: skipped (manage_firewall=0)"
+	fi
+
+	if [ "$MDNS" = 1 ]; then
+		say "dns: dnsmasq upstream through the tunnel"
+		uci -q set network.wan.peerdns=0 || return 1
+		uci_del network.wan.dns || return 1
+		uci -q add_list network.wan.dns="$DNS"
+		uci -q commit network || return 1
+
+		uci -q set dhcp.warp_dns=dnsmasq || return 1
+		uci_del dhcp.warp_dns.server || return 1
+		uci -q add_list dhcp.warp_dns.server="$DNS"
+		uci -q set dhcp.warp_dns.strictorder=0
+		uci -q commit dhcp || return 1
+	else
+		say "dns: skipped (manage_dns=0)"
+	fi
+
+	say "reloading network, firewall and dnsmasq"
+	/etc/init.d/network reload
+	/etc/init.d/firewall reload
+	if [ "$MDNS" = 1 ] && [ -x /etc/init.d/dnsmasq ]; then
+		/etc/init.d/dnsmasq reload
+	fi
+
+	if service_running; then
+		say "restarting usque so the hooks re-install routes"
+		/etc/init.d/usque restart
+	fi
+	log "routing applied (iface=$IFACE strict=$STRICT fw=$MFW dns=$MDNS)"
+	return 0
+}
+
+revert() {
+	say "stopping usque"
+	[ -x /etc/init.d/usque ] && /etc/init.d/usque stop >/dev/null 2>&1
+
+	say "removing warp UCI configuration"
+	uci_del firewall.warp
+	uci_del firewall.lan_warp
+	uci_del network.warp
+	uci_del dhcp.warp_dns
+	uci_del network.wan.metric
+	uci_del network.wan.defaultroute
+	uci -q set network.wan.peerdns=1
+	uci_del network.wan.dns
+	uci -q commit || return 1
+
+	say "reloading network, firewall and dnsmasq"
+	/etc/init.d/network reload
+	/etc/init.d/firewall reload
+	[ -x /etc/init.d/dnsmasq ] && /etc/init.d/dnsmasq reload
+	log "routing reverted"
+	return 0
+}
+
+case "${1:-}" in
+	apply)  apply ;;
+	revert) revert ;;
+	*)
+		echo "usage: $0 apply|revert" >&2
+		exit 1
+		;;
+esac

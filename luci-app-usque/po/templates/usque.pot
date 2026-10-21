@@ -1,0 +1,407 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: luci-app-usque 1.0.0\n"
+"Language: zh_Hans\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "%s (%s)"
+msgstr ""
+
+msgid "A configuration already exists. Tick \"Overwrite\" to replace it."
+msgstr ""
+
+msgid "Account"
+msgstr ""
+
+msgid "Account info"
+msgstr ""
+
+msgid "Always reconnect"
+msgstr ""
+
+msgid "Apply routing"
+msgstr ""
+
+msgid "Check egress"
+msgstr ""
+
+msgid "Check failed: %s"
+msgstr ""
+
+msgid "Checking…"
+msgstr ""
+
+msgid "Command \"%s\" executed."
+msgstr ""
+
+msgid "Command failed: %s"
+msgstr ""
+
+msgid "Configuration file"
+msgstr ""
+
+msgid "Configuration of the usque nativetun daemon. Saving commits /etc/config/usque and reloads the service through procd."
+msgstr ""
+
+msgid "Connect port"
+msgstr ""
+
+msgid "Create the warp zone, LAN to warp forwarding and NAT rules when routing is applied."
+msgstr ""
+
+msgid "default"
+msgstr ""
+
+msgid "Device credentials written by usque register. Contains private keys; keep it private."
+msgstr ""
+
+msgid "Device name"
+msgstr ""
+
+msgid "Device name may only contain letters, digits, dot, dash and underscore."
+msgstr ""
+
+msgid "Devices"
+msgstr ""
+
+msgid "Disable certificate pinning"
+msgstr ""
+
+msgid "Disable IPv4 inside the tunnel"
+msgstr ""
+
+msgid "Disable IPv6 inside the tunnel"
+msgstr ""
+
+msgid "Disable on boot"
+msgstr ""
+
+msgid "Disabled"
+msgstr ""
+
+msgid "DNS server"
+msgstr ""
+
+msgid "Done."
+msgstr ""
+
+msgid "Down"
+msgstr ""
+
+msgid "Egress check"
+msgstr ""
+
+msgid "Egress self-test"
+msgstr ""
+
+msgid "Enable on boot"
+msgstr ""
+
+msgid "Enable service"
+msgstr ""
+
+msgid "Enabled"
+msgstr ""
+
+msgid "Existing configuration"
+msgstr ""
+
+msgid "Failed: %s"
+msgstr ""
+
+msgid "Fetches https://www.cloudflare.com/cdn-cgi/trace and shows the public IP and WARP state. Requires curl or uclient-fetch."
+msgstr ""
+
+msgid "Installs the warp interface, default route priority, firewall zone and DNS upstream from the saved settings."
+msgstr ""
+
+msgid "Interface"
+msgstr ""
+
+msgid "Interface name"
+msgstr ""
+
+msgid "IPv4 default route"
+msgstr ""
+
+msgid "IPv6 default route"
+msgstr ""
+
+msgid "Keepalive period (seconds)"
+msgstr ""
+
+msgid "License key"
+msgstr ""
+
+msgid "Logs"
+msgstr ""
+
+msgid "Manage DNS"
+msgstr ""
+
+msgid "Manage firewall"
+msgstr ""
+
+msgid "Master switch. When disabled, procd will not start usque even if autostart is enabled."
+msgstr ""
+
+msgid "Metric of the default route installed by the connect hook. Must be lower than the WAN metric."
+msgstr ""
+
+msgid "Metric of the physical WAN default route. Higher means the tunnel wins while it is up."
+msgstr ""
+
+msgid "Missing"
+msgstr ""
+
+msgid "missing, register first"
+msgstr ""
+
+msgid "MTU"
+msgstr ""
+
+msgid "Name of the TUN interface. Keep warp0 unless it conflicts with another interface."
+msgstr ""
+
+msgid "Neither curl nor uclient-fetch is installed."
+msgstr ""
+
+msgid "No configuration file found. Register first."
+msgstr ""
+
+msgid "No log entries."
+msgstr ""
+
+msgid "none"
+msgstr ""
+
+msgid "not through tunnel"
+msgstr ""
+
+msgid "Optional -s value. A harmless SNI such as www.bing.com can help against DPI."
+msgstr ""
+
+msgid "Overwrite it (a .bak copy is kept)"
+msgstr ""
+
+msgid "Pass --always-reconnect so the tunnel is re-established even when idle."
+msgstr ""
+
+msgid "Pass --http2 to use TCP+TLS instead of QUIC when UDP/443 is blocked."
+msgstr ""
+
+msgid "Pass --insecure. Troubleshooting only: it removes protection against man-in-the-middle attacks."
+msgstr ""
+
+msgid "Pass --no-tunnel-ipv4."
+msgstr ""
+
+msgid "Pass --no-tunnel-ipv6."
+msgstr ""
+
+msgid "Pass -6 to connect to the WARP endpoint over IPv6."
+msgstr ""
+
+msgid "Passed as --keepalive-period. Shorten it if NAT drops idle connections."
+msgstr ""
+
+msgid "Passed as --reconnect-delay."
+msgstr ""
+
+msgid "Physical (WAN) default route"
+msgstr ""
+
+msgid "PID"
+msgstr ""
+
+msgid "Point the dnsmasq upstream at the tunnel to avoid DNS leaks when routing is applied."
+msgstr ""
+
+msgid "present"
+msgstr ""
+
+msgid "Present"
+msgstr ""
+
+msgid "Reconnect delay (seconds)"
+msgstr ""
+
+msgid "Refresh"
+msgstr ""
+
+msgid "Register"
+msgstr ""
+
+msgid "Registering, please wait…"
+msgstr ""
+
+msgid "Registers a new WARP device and writes the configuration file. Internet access to api.cloudflareclient.com is required; this can take up to a minute."
+msgstr ""
+
+msgid "Registration"
+msgstr ""
+
+msgid "Registration failed: %s"
+msgstr ""
+
+msgid "Registration succeeded."
+msgstr ""
+
+msgid "Remove the WAN default route entirely, so traffic never falls back to the ISP when the tunnel is down."
+msgstr ""
+
+msgid "Requires network access and an existing configuration file."
+msgstr ""
+
+msgid "Reset license"
+msgstr ""
+
+msgid "Reset the license key?"
+msgstr ""
+
+msgid "Restart"
+msgstr ""
+
+msgid "Revert routing"
+msgstr ""
+
+msgid "Revert routing? usque will be stopped and the warp interface, firewall and DNS entries will be removed."
+msgstr ""
+
+msgid "Routing action \"%s\" completed."
+msgstr ""
+
+msgid "Routing action failed: %s"
+msgstr ""
+
+msgid "Running"
+msgstr ""
+
+msgid "Service"
+msgstr ""
+
+msgid "Service control"
+msgstr ""
+
+msgid "Set license"
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "Start"
+msgstr ""
+
+msgid "Start on boot"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "Stop"
+msgstr ""
+
+msgid "Stop usque? The tunnel route will be removed and traffic may fall back to the WAN."
+msgstr ""
+
+msgid "Stopped"
+msgstr ""
+
+msgid "Stopping the service removes the tunnel route; the WAN fallback route takes over."
+msgstr ""
+
+msgid "Stops usque and removes the warp interface, firewall and DNS UCI entries created by Apply routing."
+msgstr ""
+
+msgid "Strict mode"
+msgstr ""
+
+msgid "Team token (JWT, optional)"
+msgstr ""
+
+msgid "The configuration path is invalid."
+msgstr ""
+
+msgid "The interface name is invalid."
+msgstr ""
+
+msgid "The license key format is invalid."
+msgstr ""
+
+msgid "The routing helper /usr/libexec/usque-routing is missing."
+msgstr ""
+
+msgid "The service is disabled in Settings. Enable it there first."
+msgstr ""
+
+msgid "The team token contains unsupported characters."
+msgstr ""
+
+msgid "The tunnel MTU; 1280 is the only supported value."
+msgstr ""
+
+msgid "The usque binary is not installed."
+msgstr ""
+
+msgid "The usque init script is not installed."
+msgstr ""
+
+msgid "through tunnel"
+msgstr ""
+
+msgid "TLS SNI"
+msgstr ""
+
+msgid "Tunnel address"
+msgstr ""
+
+msgid "Tunnel route metric"
+msgstr ""
+
+msgid "UDP/TCP port used for the MASQUE connection (443 by default)."
+msgstr ""
+
+msgid "unknown"
+msgstr ""
+
+msgid "unknown error"
+msgstr ""
+
+msgid "Unsupported action."
+msgstr ""
+
+msgid "Up"
+msgstr ""
+
+msgid "Upstream server used when Manage DNS is enabled."
+msgstr ""
+
+msgid "Uptime"
+msgstr ""
+
+msgid "Use HTTP/2 over TCP"
+msgstr ""
+
+msgid "Use IPv6 endpoint"
+msgstr ""
+
+msgid "usque binary not found"
+msgstr ""
+
+msgid "Usque WARP"
+msgstr ""
+
+msgid "Version"
+msgstr ""
+
+msgid "WAN fallback metric"
+msgstr ""
+
+msgid "Working…"
+msgstr ""
+
+msgid "Zero Trust team token"
+msgstr ""

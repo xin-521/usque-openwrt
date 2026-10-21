@@ -1,0 +1,109 @@
+﻿name: build-apk
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-apk-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  usque-apk:
+    name: usque ${{ matrix.arch }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: aarch64_cortex-a53
+            goarch: arm64
+          - arch: x86_64
+            goarch: amd64
+          - arch: mipsel_24kc
+            goarch: mipsle
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27.x"
+          cache-dependency-path: usque-src/go.sum
+
+      - name: Cross-compile usque
+        run: VERSION="${{ github.ref_name }}" sh tools/build-usque-bin.sh ${{ matrix.goarch }}
+
+      - name: Fetch apk.static
+        run: |
+          set -eu
+          curl -fsSL --retry 3 -o /tmp/apk-tools.apk \
+            "https://mirrors.aliyun.com/alpine/edge/main/x86_64/apk-tools-static-3.0.8-r0.apk"
+          echo "673f1bfb22136fc42ca035321cf731a4ad0452c000928666cb39a138f0c277bf  /tmp/apk-tools.apk" | sha256sum -c -
+          tar -xzf /tmp/apk-tools.apk sbin/apk.static
+          install -m 0755 sbin/apk.static tools/apk.static
+
+      - name: Build usque APK
+        run: sh tools/build-usque-apk.sh ${{ matrix.goarch }} ${{ matrix.arch }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: usque-${{ matrix.arch }}
+          path: dist/usque-*.apk
+          if-no-files-found: error
+
+  luci-apk:
+    name: luci-app-usque all
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch apk.static
+        run: |
+          set -eu
+          curl -fsSL --retry 3 -o /tmp/apk-tools.apk \
+            "https://mirrors.aliyun.com/alpine/edge/main/x86_64/apk-tools-static-3.0.8-r0.apk"
+          echo "673f1bfb22136fc42ca035321cf731a4ad0452c000928666cb39a138f0c277bf  /tmp/apk-tools.apk" | sha256sum -c -
+          tar -xzf /tmp/apk-tools.apk sbin/apk.static
+          install -m 0755 sbin/apk.static tools/apk.static
+
+      - name: Build po2lmo
+        run: |
+          git clone --depth 1 https://github.com/openwrt/luci /tmp/luci
+          gcc -O2 -o /tmp/po2lmo /tmp/luci/modules/luci-base/src/po2lmo.c
+          sudo install -m 0755 /tmp/po2lmo /usr/local/bin/po2lmo
+
+      - name: Build LuCI APK
+        run: sh tools/build-luci-apk.sh all
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: luci-app-usque-all
+          path: dist/luci-app-usque-*.apk
+          if-no-files-found: error
+
+  release:
+    name: release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [usque-apk, luci-apk]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Checksums
+        run: cd dist && sha256sum *.apk > SHA256SUMS
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" dist/*.apk dist/SHA256SUMS \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "usque ${GITHUB_REF_NAME}" \
+            --notes-file .github/RELEASE.md

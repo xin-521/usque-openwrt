@@ -1,0 +1,522 @@
+#!/usr/bin/ucode
+'use strict';
+// =============================================================================
+//  /usr/share/rpcd/ucode/luci.usque  ——  ubus object "luci.usque"
+//
+//  LuCI backend for the usque nativetun daemon.  It is intentionally a thin,
+//  whitelisted wrapper around fixed binaries and commands:
+//
+//    /usr/bin/usque             daemon / register / account
+//    /etc/init.d/usque          procd service control
+//    /usr/libexec/usque-routing apply|revert routing + firewall + dns
+//
+//  No command line is ever taken from the browser: only enumerated actions,
+//  a validated device name, a validated JWT and a validated license key are
+//  accepted, and all of them are single-quoted before reaching the shell.
+// =============================================================================
+
+import { access, popen, stat } from 'fs';
+
+const PROG    = '/usr/bin/usque';
+const INIT    = '/etc/init.d/usque';
+const ROUTING = '/usr/libexec/usque-routing';
+const DEFCFG  = '/etc/usque/config.json';
+const AUTOSTART = '/etc/rc.d/S95usque';
+
+/* ------------------------------------------------------------------------- */
+/* helpers                                                                    */
+/* ------------------------------------------------------------------------- */
+
+function run(cmd) {
+	let fd = popen(cmd);
+	if (!fd)
+		return { out: '', code: 127 };
+
+	let out = fd.read('all');
+	let code = fd.close();
+
+	return { out: out ? out : '', code: code };
+}
+
+function shellquote(s) {
+	return "'" + replace(s, "'", "'\\''") + "'";
+}
+
+function safe_path(p) {
+	if (p == null || length(p) < 2 || length(p) > 255 || substr(p, 0, 1) != '/')
+		return false;
+
+	const allowed = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._/-';
+	for (let i = 0; i < length(p); i++) {
+		if (index(allowed, substr(p, i, 1)) < 0)
+			return false;
+	}
+	return true;
+}
+
+function unquote(v) {
+	if (v == null)
+		return '';
+
+	if (length(v) >= 2 && substr(v, 0, 1) == "'" && substr(v, length(v) - 1, 1) == "'")
+		return substr(v, 1, length(v) - 2);
+
+	return v;
+}
+
+function uci_show() {
+	let map = {};
+	let r = run('uci -q show usque 2>/dev/null');
+	let lines = split(trim(r.out), '\n');
+
+	for (let i = 0; i < length(lines); i++) {
+		let line = trim(lines[i]);
+		let eq = index(line, '=');
+		if (eq > 0)
+			map[substr(line, 0, eq)] = unquote(substr(line, eq + 1));
+	}
+
+	return map;
+}
+
+function cfg(map, name, def) {
+	let v = map['usque.main.' + name];
+	if (v == null || v == '')
+		return def;
+	return v;
+}
+
+function service_info() {
+	let info = { running: false, pid: 0, uptime: 0, autostart: access(AUTOSTART, 'x') ? true : false };
+	let r = run("ubus call service list '{\"name\":\"usque\"}' 2>/dev/null");
+	if (r.code != 0 || r.out == '')
+		return info;
+
+	let obj = null;
+	try { obj = json(r.out); } catch (e) { obj = null; }
+	if (type(obj) != 'object' || obj == null)
+		return info;
+
+	let svc = obj['usque'];
+	if (type(svc) != 'object' || svc == null)
+		return info;
+
+	let inst = svc['instances'];
+	if (type(inst) != 'object' || inst == null)
+		return info;
+
+	let names = keys(inst);
+	for (let i = 0; i < length(names); i++) {
+		let it = inst[names[i]];
+		if (type(it) == 'object' && it != null && it['running']) {
+			info.running = true;
+			info.pid = int(it['pid'] || 0);
+			info.uptime = int(it['uptime'] || 0);
+		}
+	}
+
+	return info;
+}
+
+let version_cache = { mtime: -1, version: '' };
+
+function binary_info() {
+	let info = { path: PROG, exists: false, version: '' };
+	if (!access(PROG, 'x'))
+		return info;
+	info.exists = true;
+
+	let st = null;
+	try { st = stat(PROG); } catch (e) { st = null; }
+	let mtime = (type(st) == 'object' && st != null) ? int(st['mtime'] || 0) : 0;
+
+	if (version_cache.mtime == mtime && version_cache.version != '') {
+		info.version = version_cache.version;
+		return info;
+	}
+
+	let r = run('timeout 5 ' + PROG + ' version 2>/dev/null');
+	let lines = split(trim(r.out), '\n');
+
+	for (let i = 0; i < length(lines); i++) {
+		let line = trim(lines[i]);
+		if (index(line, 'usque version:') == 0) {
+			info.version = trim(substr(line, 14));
+			break;
+		}
+	}
+
+	if (info.version == '' && length(lines) > 0 && trim(lines[0]) != '')
+		info.version = trim(lines[0]);
+
+	version_cache.mtime = mtime;
+	version_cache.version = info.version;
+
+	return info;
+}
+
+function config_info(path) {
+	let info = { path: path, exists: false, size: 0, mtime: 0 };
+	if (!access(path, 'r'))
+		return info;
+
+	info.exists = true;
+
+	let st = null;
+	try { st = stat(path); } catch (e) { st = null; }
+	if (type(st) == 'object' && st != null) {
+		info.size = int(st['size'] || 0);
+		info.mtime = int(st['mtime'] || 0);
+	}
+
+	return info;
+}
+
+function link_info(iface) {
+	let info = { iface: iface, present: false, up: false, mtu: 0, ipv4: [], ipv6: [] };
+	let q = shellquote(iface);
+
+	let r = run('ip -o link show dev ' + q + ' 2>/dev/null');
+	if (r.code == 0 && trim(r.out) != '') {
+		info.present = true;
+
+		let m = match(r.out, /mtu ([0-9]+)/);
+		if (m != null)
+			info.mtu = int(m[1]);
+
+		let f = match(r.out, /<([^>]*)>/);
+		if (f != null && index(f[1], 'UP') >= 0)
+			info.up = true;
+	}
+
+	r = run('ip -4 addr show dev ' + q + ' 2>/dev/null');
+	let lines = split(r.out, '\n');
+	for (let i = 0; i < length(lines); i++) {
+		let m = match(lines[i], /inet ([0-9.]+)/);
+		if (m != null)
+			push(info.ipv4, m[1]);
+	}
+
+	r = run('ip -6 addr show dev ' + q + ' 2>/dev/null');
+	lines = split(r.out, '\n');
+	for (let i = 0; i < length(lines); i++) {
+		let m = match(lines[i], /inet6 ([0-9a-fA-F:]+)/);
+		if (m != null)
+			push(info.ipv6, m[1]);
+	}
+
+	return info;
+}
+
+function route_info(iface) {
+	let info = { default4: '', default6: '', wan4: '', selftest4: '' };
+
+	let r = run('ip -4 route show default 2>/dev/null');
+	info.default4 = trim(r.out);
+
+	let lines = split(info.default4, '\n');
+	let wan = [];
+	for (let i = 0; i < length(lines); i++) {
+		let line = trim(lines[i]);
+		if (line != '' && index(line, 'dev ' + iface) < 0)
+			push(wan, line);
+	}
+	info.wan4 = join('\n', wan);
+
+	r = run('ip -6 route show default 2>/dev/null');
+	info.default6 = trim(r.out);
+
+	r = run('ip -4 route get 1.1.1.1 2>/dev/null');
+	lines = split(trim(r.out), '\n');
+	info.selftest4 = (length(lines) > 0) ? lines[0] : '';
+
+	return info;
+}
+
+function tail_logs(count) {
+	let n = count || 100;
+	if (n < 1)
+		n = 1;
+	if (n > 1000)
+		n = 1000;
+
+	let r = run('logread -e usque 2>/dev/null');
+	if (r.code != 0 || trim(r.out) == '')
+		r = run('logread 2>/dev/null | grep -i usque');
+
+	let lines = split(trim(r.out), '\n');
+	let start = length(lines) - n;
+	if (start < 0)
+		start = 0;
+
+	let out = '';
+	for (let i = start; i < length(lines); i++) {
+		if (trim(lines[i]) == '')
+			continue;
+		out += lines[i] + '\n';
+	}
+
+	return { lines: out, count: length(lines) - start };
+}
+
+function uci_summary(map) {
+	return {
+		enabled: cfg(map, 'enabled', '1'),
+		iface: cfg(map, 'iface', 'warp0'),
+		config: cfg(map, 'config', DEFCFG),
+		always_reconnect: cfg(map, 'always_reconnect', '1'),
+		http2: cfg(map, 'http2', '0'),
+		ipv6: cfg(map, 'ipv6', '0'),
+		sni: cfg(map, 'sni', ''),
+		port: cfg(map, 'port', '443'),
+		keepalive: cfg(map, 'keepalive', '30'),
+		reconnect_delay: cfg(map, 'reconnect_delay', '1'),
+		mtu: cfg(map, 'mtu', '1280'),
+		insecure: cfg(map, 'insecure', '0'),
+		no_tunnel_ipv4: cfg(map, 'no_tunnel_ipv4', '0'),
+		no_tunnel_ipv6: cfg(map, 'no_tunnel_ipv6', '0'),
+		tun_metric: cfg(map, 'tun_metric', '10'),
+		wan_metric: cfg(map, 'wan_metric', '250'),
+		strict: cfg(map, 'strict', '0'),
+		manage_firewall: cfg(map, 'manage_firewall', '1'),
+		manage_dns: cfg(map, 'manage_dns', '1'),
+		dns: cfg(map, 'dns', '1.1.1.1')
+	};
+}
+
+function snapshot() {
+	let map = uci_show();
+	let iface = cfg(map, 'iface', 'warp0');
+	let path = cfg(map, 'config', DEFCFG);
+	let svc = service_info();
+
+	return {
+		ok: true,
+		binary: binary_info(),
+		config: config_info(path),
+		service: svc,
+		tunnel: link_info(iface),
+		routes: route_info(iface),
+		uci: uci_summary(map)
+	};
+}
+
+function trace_egress(iface) {
+	let tool = null;
+
+	if (access('/usr/bin/curl', 'x'))
+		tool = '/usr/bin/curl -s --max-time 12';
+	else if (access('/usr/bin/uclient-fetch', 'x'))
+		tool = '/usr/bin/uclient-fetch -q -O -';
+	else if (access('/bin/wget', 'x'))
+		tool = '/bin/wget -q -O -';
+
+	if (tool == null)
+		return { ok: false, error: 'no-http-client' };
+
+	let cmd = 'timeout 20 ' + tool;
+	if (iface != '' && index(tool, 'curl') > 0)
+		cmd += ' --interface ' + shellquote(iface);
+	cmd += ' https://www.cloudflare.com/cdn-cgi/trace 2>&1';
+
+	let r = run(cmd);
+	let res = { ok: r.code == 0, ip: '', warp: '', loc: '', colo: '', output: r.out };
+	let lines = split(r.out, '\n');
+
+	for (let i = 0; i < length(lines); i++) {
+		let line = trim(lines[i]);
+		if (index(line, 'ip=') == 0)
+			res.ip = substr(line, 3);
+		else if (index(line, 'warp=') == 0)
+			res.warp = substr(line, 5);
+		else if (index(line, 'loc=') == 0)
+			res.loc = substr(line, 4);
+		else if (index(line, 'colo=') == 0)
+			res.colo = substr(line, 5);
+	}
+
+	return res;
+}
+
+/* ------------------------------------------------------------------------- */
+/* ubus methods                                                               */
+/* ------------------------------------------------------------------------- */
+
+const methods = {
+	stat: {
+		call: function(request) {
+			return snapshot();
+		}
+	},
+
+	logs: {
+		args: { lines: 'int' },
+		call: function(request) {
+			return tail_logs(request.args.lines);
+		}
+	},
+
+	control: {
+		args: { action: 'string' },
+		call: function(request) {
+			let action = request.args.action;
+			let sub = null;
+
+			if (action == 'start')
+				sub = 'start';
+			else if (action == 'stop')
+				sub = 'stop';
+			else if (action == 'restart')
+				sub = 'restart';
+			else if (action == 'reload')
+				sub = 'reload';
+			else if (action == 'enable')
+				sub = 'enable';
+			else if (action == 'disable')
+				sub = 'disable';
+
+			if (sub == null)
+				return { ok: false, error: 'bad-action' };
+
+			if (!access(INIT, 'x'))
+				return { ok: false, error: 'init-missing' };
+
+			if (sub == 'start' || sub == 'restart' || sub == 'reload') {
+				let map = uci_show();
+				if (cfg(map, 'enabled', '1') == '0')
+					return { ok: false, error: 'service-disabled' };
+			}
+
+			let r = run('timeout 25 ' + INIT + ' ' + sub + ' 2>&1');
+
+			return {
+				ok: r.code == 0,
+				code: r.code,
+				output: r.out,
+				stat: snapshot()
+			};
+		}
+	},
+
+	routing: {
+		args: { action: 'string' },
+		call: function(request) {
+			let action = request.args.action;
+			if (action != 'apply' && action != 'revert')
+				return { ok: false, error: 'bad-action' };
+
+			if (!access(ROUTING, 'x'))
+				return { ok: false, error: 'routing-helper-missing' };
+
+			let r = run('timeout 28 ' + ROUTING + ' ' + action + ' 2>&1');
+
+			return {
+				ok: r.code == 0,
+				code: r.code,
+				output: r.out,
+				stat: snapshot()
+			};
+		}
+	},
+
+	check_egress: {
+		args: { iface: 'string' },
+		call: function(request) {
+			let iface = (request.args.iface != null) ? trim(request.args.iface) : '';
+			if (iface != '' && match(iface, /^[A-Za-z0-9._-]{1,15}$/) == null)
+				return { ok: false, error: 'invalid-iface' };
+
+			return trace_egress(iface);
+		}
+	},
+
+	register: {
+		args: { name: 'string', jwt: 'string', overwrite: 'bool' },
+		call: function(request) {
+			if (!access(PROG, 'x'))
+				return { ok: false, error: 'binary-missing' };
+
+			let name = (request.args.name != null) ? trim(request.args.name) : '';
+			if (name == '')
+				name = 'openwrt-router';
+			if (length(name) > 64 || match(name, /^[A-Za-z0-9._-]+$/) == null)
+				return { ok: false, error: 'invalid-name' };
+
+			let jwt = (request.args.jwt != null) ? trim(request.args.jwt) : '';
+			if (jwt != '' && (length(jwt) > 4096 || match(jwt, /^[A-Za-z0-9._-]+$/) == null))
+				return { ok: false, error: 'invalid-jwt' };
+
+			let map = uci_show();
+			let path = cfg(map, 'config', DEFCFG);
+			if (!safe_path(path))
+				return { ok: false, error: 'invalid-config-path' };
+
+			let existed = access(path, 'r');
+			let backup = path + '.bak';
+
+			if (existed) {
+				if (!request.args.overwrite)
+					return { ok: false, error: 'config-exists' };
+
+				let mv = run('mv -f ' + shellquote(path) + ' ' + shellquote(backup) + ' 2>&1');
+				if (mv.code != 0)
+					return { ok: false, error: 'backup-failed', output: mv.out };
+			}
+
+			let cmd = 'timeout 25 ' + PROG +
+				' -c ' + shellquote(path) +
+				' register -n ' + shellquote(name) + ' -a';
+			if (jwt != '')
+				cmd += ' --jwt ' + shellquote(jwt);
+			cmd += ' 2>&1';
+
+			let r = run(cmd);
+			let ok = (r.code == 0) && access(path, 'r');
+
+			if (!ok && existed)
+				run('mv -f ' + shellquote(backup) + ' ' + shellquote(path) + ' 2>/dev/null');
+			else if (!ok)
+				run('rm -f ' + shellquote(path) + ' 2>/dev/null');
+
+			return {
+				ok: ok,
+				code: r.code,
+				output: r.out,
+				config: path,
+				backup: existed ? backup : ''
+			};
+		}
+	},
+
+	account: {
+		args: { action: 'string', key: 'string' },
+		call: function(request) {
+			if (!access(PROG, 'x'))
+				return { ok: false, error: 'binary-missing' };
+
+			let action = request.args.action;
+			if (action != 'info' && action != 'devices' && action != 'set' && action != 'reset')
+				return { ok: false, error: 'bad-action' };
+
+			let key = (request.args.key != null) ? trim(request.args.key) : '';
+			if (action == 'set' && (length(key) < 8 || length(key) > 64 || match(key, /^[A-Za-z0-9-]+$/) == null))
+				return { ok: false, error: 'invalid-license' };
+
+			let map = uci_show();
+			let path = cfg(map, 'config', DEFCFG);
+			if (!access(path, 'r'))
+				return { ok: false, error: 'no-config' };
+
+			let cmd = 'timeout 25 ' + PROG + ' -c ' + shellquote(path) + ' account ' + action;
+			if (action == 'set')
+				cmd += ' ' + shellquote(key);
+			cmd += ' 2>&1';
+
+			let r = run(cmd);
+
+			return { ok: r.code == 0, code: r.code, output: r.out };
+		}
+	}
+};
+
+return { 'luci.usque': methods };

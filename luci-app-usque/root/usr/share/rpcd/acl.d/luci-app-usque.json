@@ -1,0 +1,18 @@
+{
+	"luci-app-usque": {
+		"description": "Grant access to usque (Cloudflare WARP / MASQUE)",
+		"read": {
+			"ubus": {
+				"luci.usque": [ "stat", "logs", "check_egress" ]
+			},
+			"uci": [ "usque" ]
+		},
+		"write": {
+			"ubus": {
+				"luci.usque": [ "control", "register", "account", "routing" ],
+				"uci": [ "add", "set", "delete", "order", "commit", "apply" ]
+			},
+			"uci": [ "usque" ]
+		}
+	}
+}
