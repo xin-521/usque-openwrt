@@ -15,7 +15,7 @@ PY
 
 D=$(mktemp -d)
 trap 'rm -rf "$D"' EXIT
-"$APK_STATIC" extract --allow-untrusted --root "$D" "$APK" >/dev/null
+"$APK_STATIC" extract --allow-untrusted --destination "$D" "$APK" >/dev/null
 
 need=""
 [ "$KIND" = usque ] && need="usr/bin/usque etc/init.d/usque etc/config/usque etc/usque/up.sh etc/usque/down.sh etc/usque/options.sh etc/sysctl.d/90-usque.conf usr/libexec/usque-routing"
