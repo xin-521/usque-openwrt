@@ -59,7 +59,7 @@ jobs:
           if-no-files-found: error
 
   luci-apk:
-    name: luci-app-usque all
+    name: luci-app-usque noarch
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -80,14 +80,14 @@ jobs:
           sudo install -m 0755 /tmp/luci/modules/luci-base/src/po2lmo /usr/local/bin/po2lmo
 
       - name: Build LuCI APK
-        run: sh tools/build-luci-apk.sh all
+        run: sh tools/build-luci-apk.sh noarch
 
       - name: Verify APK
-        run: sh tools/verify-apk.sh luci dist/luci-app-usque-1.1.0-r1.all.apk
+        run: sh tools/verify-apk.sh luci dist/luci-app-usque-1.1.1-r1.noarch.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: luci-app-usque-all
+          name: luci-app-usque-noarch
           path: dist/luci-app-usque-*.apk
           if-no-files-found: error
 

@@ -24,7 +24,7 @@ rm -rf /tmp/luci-*
 ```sh
 sh tools/build-usque-bin.sh arm64     # 或 amd64 / mipsle
 APK_STATIC=/path/to/apk.static sh tools/build-usque-apk.sh arm64 aarch64_cortex-a53
-APK_STATIC=/path/to/apk.static sh tools/build-luci-apk.sh all
+APK_STATIC=/path/to/apk.static sh tools/build-luci-apk.sh noarch
 ```
 
 CI（`.github/workflows/build.yml`）在 `v*` 标签上构建三个架构并发布 Release。

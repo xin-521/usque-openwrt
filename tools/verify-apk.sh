@@ -15,6 +15,11 @@ PY
 
 D=$(mktemp -d)
 trap 'rm -rf "$D"' EXIT
+if [ "$KIND" = luci ]; then
+	ARCH=$("$APK_STATIC" adbdump "$APK" | sed -n 's/^  arch: //p')
+	[ "$ARCH" = noarch ] || { echo "BAD arch: $ARCH (want noarch)" >&2; exit 1; }
+fi
+
 "$APK_STATIC" extract --allow-untrusted --destination "$D" "$APK" >/dev/null
 
 need=""

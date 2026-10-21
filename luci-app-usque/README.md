@@ -49,14 +49,14 @@ make package/feeds/luci/luci-app-usque/compile V=s
 
 ```sh
 APK_STATIC=/path/to/apk.static sh tools/build-usque-apk.sh arm64
-APK_STATIC=/path/to/apk.static sh tools/build-luci-apk.sh all
+APK_STATIC=/path/to/apk.static sh tools/build-luci-apk.sh noarch
 ```
 
 路由器上：
 
 ```sh
 apk add --allow-untrusted usque-4.2.1-r1.<arch>.apk \
-                       luci-app-usque-1.1.0-r1.all.apk
+                       luci-app-usque-1.1.1-r1.noarch.apk
 /etc/init.d/rpcd restart
 rm -rf /tmp/luci-*
 ```

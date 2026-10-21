@@ -20,9 +20,12 @@ ROOT=$(cd "$HERE/.." && pwd)
 SRC="$ROOT/luci-app-usque"
 
 NAME=luci-app-usque
-VER=1.1.0
+VER=1.1.1
 REL=1
-ARCH=${1:-all}
+# apk v3 uses "noarch" for architecture-independent packages; "all" is not
+# a valid apk arch and makes the package uninstallable.
+ARCH=${1:-noarch}
+[ "$ARCH" = all ] && ARCH=noarch
 
 APK_STATIC=${APK_STATIC:-}
 if [ -z "$APK_STATIC" ]; then
