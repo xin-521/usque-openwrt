@@ -14,7 +14,7 @@
 
 ```sh
 cd /tmp
-apk add --allow-untrusted ./usque-4.2.1-r2.<你的架构>.apk
+apk add --allow-untrusted ./usque-4.2.1-r3.<你的架构>.apk
 apk add --allow-untrusted ./luci-app-usque-1.1.2-r1.noarch.apk
 /etc/init.d/rpcd restart
 rm -rf /tmp/luci-*
