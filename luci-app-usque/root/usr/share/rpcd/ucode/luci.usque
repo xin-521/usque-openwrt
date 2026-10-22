@@ -53,6 +53,37 @@ function shellquote(s) {
 	return "'" + replace(s, "'", "'\\''") + "'";
 }
 
+// Accepts a bare JWT as well as the whole Zero Trust login snippet users tend
+// to copy from the dashboard, e.g.
+//   <meta http-equiv="refresh" content="0;url=com.cloudflare.warp://
+//    team.cloudflareaccess.com/auth?token=eyJ...">
+// and returns just the token.  Returns null when the input is not empty but no
+// token can be found, so a bad paste never falls back to a free registration.
+function extract_jwt(v) {
+	if (v == null)
+		return '';
+
+	let s = trim(v);
+	if (s == '')
+		return '';
+
+	if (length(s) >= 2) {
+		let first = substr(s, 0, 1);
+		let last = substr(s, length(s) - 1, 1);
+		if ((first == '"' && last == '"') || (first == "'" && last == "'"))
+			s = trim(substr(s, 1, length(s) - 2));
+	}
+
+	let m = match(s, /[?&]token=([A-Za-z0-9._~-]+)/);
+	if (m != null)
+		return m[1];
+
+	if (match(s, /[<>"'\s]/) != null)
+		return null;
+
+	return s;
+}
+
 function safe_path(p) {
 	if (p == null || length(p) < 2 || length(p) > 255 || substr(p, 0, 1) != '/')
 		return false;
@@ -453,8 +484,8 @@ const methods = {
 			if (length(name) > 64 || match(name, /^[A-Za-z0-9._-]+$/) == null)
 				return { ok: false, error: 'invalid-name' };
 
-			let jwt = (request.args.jwt != null) ? trim(request.args.jwt) : '';
-			if (jwt != '' && (length(jwt) > 4096 || match(jwt, /^[A-Za-z0-9._-]+$/) == null))
+			let jwt = extract_jwt(request.args.jwt);
+			if (jwt == null || (jwt != '' && (length(jwt) > 4096 || match(jwt, /^[A-Za-z0-9._-]+$/) == null)))
 				return { ok: false, error: 'invalid-jwt' };
 
 			let map = uci_show();
@@ -465,10 +496,11 @@ const methods = {
 			let existed = access(path, 'r');
 			let backup = path + '.bak';
 
+			// `usque register` asks "Do you want to overwrite it? (y/n)" whenever
+			// a config can be loaded, and rpcd cannot answer that prompt.  Move
+			// the old file aside first so the command always runs unattended;
+			// it is restored if registration fails.
 			if (existed) {
-				if (!request.args.overwrite)
-					return { ok: false, error: 'config-exists' };
-
 				let mv = run('mv -f ' + shellquote(path) + ' ' + shellquote(backup) + ' 2>&1');
 				if (mv.code != 0)
 					return { ok: false, error: 'backup-failed', output: mv.out };
@@ -476,7 +508,7 @@ const methods = {
 
 			let cmd = tmo(25, PROG +
 				' -c ' + shellquote(path) +
-				' register -n ' + shellquote(name) + ' -a');
+				' register -n ' + shellquote(name) + ' -a < /dev/null');
 			if (jwt != '')
 				cmd += ' --jwt ' + shellquote(jwt);
 			cmd += ' 2>&1';

@@ -10,7 +10,13 @@ OpenWrt 25.x 的 usque（Cloudflare WARP / MASQUE）客户端与 LuCI 界面，�
 
 `<arch>` 与路由器 `apk info --print-arch` 一致；LuCI 包为 `noarch`。包未签名，安装需 `--allow-untrusted`。
 
-## 本次变更（r3）
+## 本次变更（r4）
+
+- LuCI 注册使用团队令牌时不再卡在 `Do you want to overwrite it? (y/n)`：注册前自动把旧配置改名为 `config.json.bak`，失败自动还原；命令 stdin 接 `/dev/null`，rpcd 下不会等待交互输入
+- 团队令牌支持直接粘贴裸 JWT、`.../auth?token=...` 登录链接或整段 `<meta http-equiv="refresh" ...>` 片段，后端自动提取其中的 token
+- 移除界面上的 Overwrite 勾选；LuCI 包版本 1.1.3
+
+## 上一版（r3）
 
 - 修复 usque 服务始终不启动：`/etc/init.d/usque` 首行缺少 `/etc/rc.common`，procd 从未注册实例，`start`/`enable` 静默返回 0、不生成 `S95usque` 软链、`warp0` 不出现。升级后 `usque status` 应为 running
 

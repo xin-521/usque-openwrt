@@ -7,3 +7,4 @@ tools/apk.static
 *.exe
 dist/bin/usque-linux-*
 !dist/bin/usque-linux-arm64
+/WORKLOG.md

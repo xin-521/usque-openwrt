@@ -6,7 +6,7 @@ LUCI_DEPENDS:=+luci-base +rpcd-mod-ucode +ucode-mod-fs +usque
 LUCI_PKGARCH:=all
 LUCI_LANG.zh_Hans:=简体中文
 
-PKG_VERSION:=1.1.2
+PKG_VERSION:=1.1.3
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_MAINTAINER:=usque-openwrt contributors

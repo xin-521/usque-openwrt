@@ -10,9 +10,6 @@ msgstr ""
 msgid "%s (%s)"
 msgstr "%s（%s）"
 
-msgid "A configuration already exists. Tick \"Overwrite\" to replace it."
-msgstr "配置已存在。勾选“覆盖”后再试。"
-
 msgid "Account"
 msgstr "账户"
 
@@ -24,6 +21,9 @@ msgstr "始终重连"
 
 msgid "Apply routing"
 msgstr "应用路由"
+
+msgid "Bare token, login link or <meta> snippet"
+msgstr "令牌、登录链接或 <meta> 片段"
 
 msgid "Check egress"
 msgstr "检测出口"
@@ -48,6 +48,9 @@ msgstr "usque nativetun 守护进程配置。保存会提交 /etc/config/usque�
 
 msgid "Connect port"
 msgstr "连接端口"
+
+msgid "Could not move the existing configuration aside."
+msgstr "无法移走现有配置。"
 
 msgid "Create the warp zone, LAN to warp forwarding and NAT rules when routing is applied."
 msgstr "应用路由时创建 warp 区域、LAN→warp 转发与 NAT 规则。"
@@ -105,9 +108,6 @@ msgstr "启用服务"
 
 msgid "Enabled"
 msgstr "已启用"
-
-msgid "Existing configuration"
-msgstr "现有配置"
 
 msgid "Failed: %s"
 msgstr "失败：%s"
@@ -175,6 +175,9 @@ msgstr "未找到配置文件，请先注册。"
 msgid "No log entries."
 msgstr "暂无日志。"
 
+msgid "No valid team token was found in the pasted text."
+msgstr "粘贴的内容中未找到有效的团队令牌。"
+
 msgid "none"
 msgstr "无"
 
@@ -183,9 +186,6 @@ msgstr "未经过隧道"
 
 msgid "Optional -s value. A harmless SNI such as www.bing.com can help against DPI."
 msgstr "可选的 -s 值。使用 www.bing.com 之类的无害 SNI 有助于对抗 DPI。"
-
-msgid "Overwrite it (a .bak copy is kept)"
-msgstr "覆盖它（保留 .bak 备份）"
 
 msgid "Pass --always-reconnect so the tunnel is re-established even when idle."
 msgstr "传入 --always-reconnect，空闲时也会保持重连。"
@@ -210,6 +210,9 @@ msgstr "作为 --keepalive-period 传入。NAT 会断开空闲连接时请调小
 
 msgid "Passed as --reconnect-delay."
 msgstr "作为 --reconnect-delay 传入。"
+
+msgid "Paste the bare token, the whole login link, or the <meta ...> snippet; the token is extracted automatically."
+msgstr "可直接粘贴令牌、完整登录链接或 <meta ...> 片段，程序会自动提取令牌。"
 
 msgid "Physical (WAN) default route"
 msgstr "物理（WAN）默认路由"
@@ -238,8 +241,8 @@ msgstr "注册"
 msgid "Registering, please wait…"
 msgstr "正在注册，请稍候…"
 
-msgid "Registers a new WARP device and writes the configuration file. Internet access to api.cloudflareclient.com is required; this can take up to a minute."
-msgstr "注册新的 WARP 设备并写入配置文件。需要能访问 api.cloudflareclient.com，最长约一分钟。"
+msgid "Registers a new WARP device and writes the configuration file. An existing configuration is backed up to .bak and replaced automatically. Internet access to api.cloudflareclient.com is required; this can take up to a minute."
+msgstr "注册新的 WARP 设备并写入配置文件。现有配置会自动备份为 .bak 后替换。需要能访问 api.cloudflareclient.com，最长约一分钟。"
 
 msgid "Registration"
 msgstr "注册"
@@ -319,8 +322,8 @@ msgstr "停止 usque 并删除“应用路由”创建的 warp 接口、防火�
 msgid "Strict mode"
 msgstr "严格模式"
 
-msgid "Team token (JWT, optional)"
-msgstr "团队令牌（JWT，可选）"
+msgid "Team token (JWT or login link, optional)"
+msgstr "团队令牌（JWT 或登录链接，可选）"
 
 msgid "The configuration path is invalid."
 msgstr "配置路径无效。"
@@ -336,9 +339,6 @@ msgstr "路由助手 /usr/libexec/usque-routing 不存在。"
 
 msgid "The service is disabled in Settings. Enable it there first."
 msgstr "服务已在设置中禁用，请先在设置里启用。"
-
-msgid "The team token contains unsupported characters."
-msgstr "团队令牌包含不支持的字符。"
 
 msgid "The tunnel MTU; 1280 is the only supported value."
 msgstr "隧道 MTU，仅支持 1280。"
@@ -402,6 +402,3 @@ msgstr "WAN 后备 metric"
 
 msgid "Working…"
 msgstr "处理中…"
-
-msgid "Zero Trust team token"
-msgstr "Zero Trust 团队令牌"

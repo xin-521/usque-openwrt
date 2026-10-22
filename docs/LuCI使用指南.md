@@ -14,8 +14,8 @@
 
 ```sh
 cd /tmp
-apk add --allow-untrusted ./usque-4.2.1-r3.<你的架构>.apk
-apk add --allow-untrusted ./luci-app-usque-1.1.2-r1.noarch.apk
+apk add --allow-untrusted ./usque-4.2.1-r4.<你的架构>.apk
+apk add --allow-untrusted ./luci-app-usque-1.1.3-r1.noarch.apk
 /etc/init.d/rpcd restart
 rm -rf /tmp/luci-*
 ```
@@ -95,9 +95,12 @@ rm -rf /tmp/luci-*
 ### Registration
 
 - 设备名只允许字母、数字、`.`、`-`、`_`，最长 64。
-- Team token（可选）只允许 `[A-Za-z0-9._-]`。
-- 已有配置时需勾 **Overwrite it**；旧文件会改名为 `config.json.bak`，
-  失败自动还原。
+- Team token（可选）可以粘贴三种形式，程序会自动提取其中的 JWT：
+  1. 裸 token：`eyJhbGciOi...`；
+  2. 完整登录链接：`com.cloudflare.warp://<team>.cloudflareaccess.com/auth?token=...`；
+  3. 控制台给的整段 `<meta http-equiv="refresh" content="0;url=...token=...">`。
+- 已有配置会自动改名为 `config.json.bak`，然后重新注册；注册失败自动还原。
+  不再需要勾选“覆盖”，也不会再卡在 `(y/n)` 提示上。
 - 注册要访问 `api.cloudflareclient.com`，可能耗时一分钟。
 
 ### Account
@@ -134,7 +137,7 @@ ubus 调用见 [`luci-app-usque/README.md`](../luci-app-usque/README.md#ubus-api
 |------|------|
 | 菜单不出现 | 两个包都装了吗；`/etc/init.d/rpcd restart` 并强刷浏览器 |
 | `usque binary not found` | 先 `which usque`：存在则 `/etc/init.d/rpcd restart`（rpcd 只在启动时加载 `/usr/share/rpcd/ucode/luci.usque`，不重启时 ubus 对象 `luci.usque` 不存在，界面任何状态都取不到）；不存在再重装 `usque` 包并确认 `/usr/bin/usque` 可执行 |
-| 注册失败 `config-exists` | 勾 Overwrite，或先备份再删旧配置 |
+| 注册失败 `invalid-jwt` | 确认粘贴内容里有 `token=` 或直接粘贴裸 JWT；整段 `<meta>` 也可以 |
 | 服务启动即退 | 看 Logs；确认已注册、`kmod-tun` 已加载（`lsmod \| grep tun`） |
 | 有接口但无法上网 | 查 IPv4 default route 是否指向隧道；先关 Strict 再试 |
 | 出口仍是本地 IP | 重新 Apply routing；确认 Egress self-test 为 through tunnel |

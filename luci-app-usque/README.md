@@ -55,8 +55,8 @@ APK_STATIC=/path/to/apk.static sh tools/build-luci-apk.sh noarch
 路由器上：
 
 ```sh
-apk add --allow-untrusted usque-4.2.1-r3.<arch>.apk \
-                       luci-app-usque-1.1.2-r1.noarch.apk
+apk add --allow-untrusted usque-4.2.1-r4.<arch>.apk \
+                       luci-app-usque-1.1.3-r1.noarch.apk
 /etc/init.d/rpcd restart
 rm -rf /tmp/luci-*
 ```
@@ -84,17 +84,19 @@ ubus call luci.usque stat '{}'
 | `logs` | `lines:int` | `{lines, count}`，取自 `logread -e usque` | read |
 | `check_egress` | `iface:string` | `{ok, ip, warp, loc, colo, output}`，请求 Cloudflare trace | read |
 | `control` | `action`: `start\|stop\|restart\|reload\|enable\|disable` | `{ok, code, output, stat}`；`enabled=0` 时启动类动作返回 `service-disabled` | write |
-| `register` | `name:string`, `jwt:string`, `overwrite:bool` | `{ok, code, output, config, backup}` | write |
+| `register` | `name:string`, `jwt:string` | `{ok, code, output, config, backup}` | write |
 | `account` | `action`: `info\|devices\|set\|reset`, `key:string` | `{ok, code, output}` | write |
 | `routing` | `action`: `apply\|revert` | `{ok, code, output, stat}` | write |
 
 说明：
 
 - `stat` 不做网络请求，前端每 10 秒轮询一次。
-- `register` 在 `overwrite=false` 且配置已存在时返回 `config-exists`；覆盖时先把
-  旧文件改名为 `config.json.bak`，失败自动还原；没有旧配置时失败会删除半成品。
-- 设备名白名单 `[A-Za-z0-9._-]`（≤64）；JWT 只允许 `[A-Za-z0-9._-]`；
-  许可密钥 `[A-Za-z0-9-]`（8–64）；接口名、配置路径均做白名单校验。
+- `register` 每次都会先把旧文件改名为 `config.json.bak` 再注册，失败自动还原；
+  没有旧配置时失败会删除半成品。这样 `usque register` 不会停在
+  “Do you want to overwrite it? (y/n)” 提示上。
+- `jwt` 可以是裸 JWT、完整登录链接或整段 `<meta ...>` 片段，后端会自动提取
+  `token=` 参数。设备名白名单 `[A-Za-z0-9._-]`（≤64）；提取后的 JWT 只允许
+  `[A-Za-z0-9._-]`；许可密钥 `[A-Za-z0-9-]`（8–64）；接口名、配置路径均做白名单校验。
 - `routing apply` 安装 warp 接口、路由优先级、防火墙与 DNS 上游，并重载
   network/firewall/dnsmasq；参数全部来自 UCI，浏览器不传命令。
 - `routing revert` 先停 usque，再删除 warp 接口、防火墙、DNS 的 UCI 条目并

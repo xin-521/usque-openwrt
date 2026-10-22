@@ -10,9 +10,6 @@ msgstr ""
 msgid "%s (%s)"
 msgstr ""
 
-msgid "A configuration already exists. Tick \"Overwrite\" to replace it."
-msgstr ""
-
 msgid "Account"
 msgstr ""
 
@@ -23,6 +20,9 @@ msgid "Always reconnect"
 msgstr ""
 
 msgid "Apply routing"
+msgstr ""
+
+msgid "Bare token, login link or <meta> snippet"
 msgstr ""
 
 msgid "Check egress"
@@ -47,6 +47,9 @@ msgid "Configuration of the usque nativetun daemon. Saving commits /etc/config/u
 msgstr ""
 
 msgid "Connect port"
+msgstr ""
+
+msgid "Could not move the existing configuration aside."
 msgstr ""
 
 msgid "Create the warp zone, LAN to warp forwarding and NAT rules when routing is applied."
@@ -104,9 +107,6 @@ msgid "Enable service"
 msgstr ""
 
 msgid "Enabled"
-msgstr ""
-
-msgid "Existing configuration"
 msgstr ""
 
 msgid "Failed: %s"
@@ -175,6 +175,9 @@ msgstr ""
 msgid "No log entries."
 msgstr ""
 
+msgid "No valid team token was found in the pasted text."
+msgstr ""
+
 msgid "none"
 msgstr ""
 
@@ -182,9 +185,6 @@ msgid "not through tunnel"
 msgstr ""
 
 msgid "Optional -s value. A harmless SNI such as www.bing.com can help against DPI."
-msgstr ""
-
-msgid "Overwrite it (a .bak copy is kept)"
 msgstr ""
 
 msgid "Pass --always-reconnect so the tunnel is re-established even when idle."
@@ -209,6 +209,9 @@ msgid "Passed as --keepalive-period. Shorten it if NAT drops idle connections."
 msgstr ""
 
 msgid "Passed as --reconnect-delay."
+msgstr ""
+
+msgid "Paste the bare token, the whole login link, or the <meta ...> snippet; the token is extracted automatically."
 msgstr ""
 
 msgid "Physical (WAN) default route"
@@ -238,7 +241,7 @@ msgstr ""
 msgid "Registering, please wait…"
 msgstr ""
 
-msgid "Registers a new WARP device and writes the configuration file. Internet access to api.cloudflareclient.com is required; this can take up to a minute."
+msgid "Registers a new WARP device and writes the configuration file. An existing configuration is backed up to .bak and replaced automatically. Internet access to api.cloudflareclient.com is required; this can take up to a minute."
 msgstr ""
 
 msgid "Registration"
@@ -319,7 +322,7 @@ msgstr ""
 msgid "Strict mode"
 msgstr ""
 
-msgid "Team token (JWT, optional)"
+msgid "Team token (JWT or login link, optional)"
 msgstr ""
 
 msgid "The configuration path is invalid."
@@ -335,9 +338,6 @@ msgid "The routing helper /usr/libexec/usque-routing is missing."
 msgstr ""
 
 msgid "The service is disabled in Settings. Enable it there first."
-msgstr ""
-
-msgid "The team token contains unsupported characters."
 msgstr ""
 
 msgid "The tunnel MTU; 1280 is the only supported value."
@@ -401,7 +401,4 @@ msgid "WAN fallback metric"
 msgstr ""
 
 msgid "Working…"
-msgstr ""
-
-msgid "Zero Trust team token"
 msgstr ""

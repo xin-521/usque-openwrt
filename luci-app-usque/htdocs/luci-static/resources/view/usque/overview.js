@@ -34,7 +34,7 @@ var callEgress = rpc.declare({
 var callRegister = rpc.declare({
 	object: 'luci.usque',
 	method: 'register',
-	params: [ 'name', 'jwt', 'overwrite' ],
+	params: [ 'name', 'jwt' ],
 	expect: {}
 });
 
@@ -99,9 +99,8 @@ function note(text) {
 
 function errorText(err) {
 	var map = {
-		'config-exists': _('A configuration already exists. Tick "Overwrite" to replace it.'),
 		'invalid-name': _('Device name may only contain letters, digits, dot, dash and underscore.'),
-		'invalid-jwt': _('The team token contains unsupported characters.'),
+		'invalid-jwt': _('No valid team token was found in the pasted text.'),
 		'invalid-license': _('The license key format is invalid.'),
 		'invalid-config-path': _('The configuration path is invalid.'),
 		'invalid-iface': _('The interface name is invalid.'),
@@ -111,6 +110,7 @@ function errorText(err) {
 		'service-disabled': _('The service is disabled in Settings. Enable it there first.'),
 		'routing-helper-missing': _('The routing helper /usr/libexec/usque-routing is missing.'),
 		'no-http-client': _('Neither curl nor uclient-fetch is installed.'),
+		'backup-failed': _('Could not move the existing configuration aside.'),
 		'bad-action': _('Unsupported action.'),
 		'unknown error': _('unknown error')
 	};
@@ -320,25 +320,23 @@ return view.extend({
 	renderRegister: function() {
 		return E('div', { 'class': 'cbi-section' }, [
 			E('h3', {}, _('Registration')),
-			note(_('Registers a new WARP device and writes the configuration file. Internet access to api.cloudflareclient.com is required; this can take up to a minute.')),
+			note(_('Registers a new WARP device and writes the configuration file. An existing configuration is backed up to .bak and replaced automatically. Internet access to api.cloudflareclient.com is required; this can take up to a minute.')),
 			E('div', { 'class': 'cbi-value' }, [
 				E('label', { 'class': 'cbi-value-title' }, _('Device name')),
 				E('div', { 'class': 'cbi-value-field' },
 					E('input', { 'id': 'usque-reg-name', 'class': 'cbi-input-text', 'value': 'openwrt-router' }))
 			]),
 			E('div', { 'class': 'cbi-value' }, [
-				E('label', { 'class': 'cbi-value-title' }, _('Team token (JWT, optional)')),
-				E('div', { 'class': 'cbi-value-field' },
-					E('input', { 'id': 'usque-reg-jwt', 'class': 'cbi-input-text', 'placeholder': _('Zero Trust team token') }))
-			]),
-			E('div', { 'class': 'cbi-value' }, [
-				E('label', { 'class': 'cbi-value-title' }, _('Existing configuration')),
+				E('label', { 'class': 'cbi-value-title' }, _('Team token (JWT or login link, optional)')),
 				E('div', { 'class': 'cbi-value-field' }, [
-					E('label', {}, [
-						E('input', { 'id': 'usque-reg-overwrite', 'type': 'checkbox' }),
-						' ',
-						_('Overwrite it (a .bak copy is kept)')
-					])
+					E('input', {
+						'id': 'usque-reg-jwt',
+						'class': 'cbi-input-text',
+						'style': 'width:100%',
+						'placeholder': _('Bare token, login link or <meta> snippet')
+					}),
+					E('div', { 'class': 'cbi-value-description' },
+						_('Paste the bare token, the whole login link, or the <meta ...> snippet; the token is extracted automatically.'))
 				])
 			]),
 			E('div', { 'class': 'cbi-page-actions', 'style': 'justify-content:flex-start' }, [
@@ -351,17 +349,15 @@ return view.extend({
 	handleRegister: function() {
 		var nameNode = document.getElementById('usque-reg-name');
 		var jwtNode = document.getElementById('usque-reg-jwt');
-		var owNode = document.getElementById('usque-reg-overwrite');
 		var out = document.getElementById('usque-reg-out');
 
 		var name = nameNode ? nameNode.value.trim() : '';
 		var jwt = jwtNode ? jwtNode.value.trim() : '';
-		var overwrite = !!(owNode && owNode.checked);
 
 		if (out)
 			out.textContent = _('Registering, please wait…');
 
-		return callRegister(name, jwt, overwrite).then(L.bind(function(res) {
+		return callRegister(name, jwt).then(L.bind(function(res) {
 			if (out)
 				out.textContent = (res && res.output) || '';
 
