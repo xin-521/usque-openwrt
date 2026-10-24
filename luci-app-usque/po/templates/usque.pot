@@ -19,6 +19,9 @@ msgstr ""
 msgid "Always reconnect"
 msgstr ""
 
+msgid "Autostart is enabled once when the package is first installed. You can disable it here at any time."
+msgstr ""
+
 msgid "Apply routing"
 msgstr ""
 
@@ -115,6 +118,12 @@ msgstr ""
 msgid "Fetches https://www.cloudflare.com/cdn-cgi/trace and shows the public IP and WARP state. Requires curl or uclient-fetch."
 msgstr ""
 
+msgid "HTTP/2 IPv4 endpoint"
+msgstr ""
+
+msgid "HTTP/2 IPv6 endpoint"
+msgstr ""
+
 msgid "Installs the warp interface, default route priority, firewall zone and DNS upstream from the saved settings."
 msgstr ""
 
@@ -190,13 +199,19 @@ msgstr ""
 msgid "not through tunnel"
 msgstr ""
 
+msgid "not set"
+msgstr ""
+
 msgid "Optional -s value. A harmless SNI such as www.bing.com can help against DPI."
+msgstr ""
+
+msgid "Optional override for endpoint_h2_v4. Leave empty to use the endpoint stored in config.json, or 162.159.198.2 when it is unset."
 msgstr ""
 
 msgid "Pass --always-reconnect so the tunnel is re-established even when idle."
 msgstr ""
 
-msgid "Pass --http2 to use TCP+TLS instead of QUIC when UDP/443 is blocked."
+msgid "Pass --http2 to use TCP+TLS instead of QUIC when UDP/443 is blocked. If logs report \"tls: access denied\", Cloudflare rejected this account or endpoint for HTTP/2; try another endpoint."
 msgstr ""
 
 msgid "Pass --insecure. Troubleshooting only: it removes protection against man-in-the-middle attacks."
@@ -266,6 +281,9 @@ msgid "Remove the WAN default route entirely, so traffic never falls back to the
 msgstr ""
 
 msgid "Requires network access and an existing configuration file."
+msgstr ""
+
+msgid "Required when both HTTP/2 and IPv6 endpoint are enabled. The usque default is empty."
 msgstr ""
 
 msgid "Reset license"
@@ -352,7 +370,7 @@ msgstr ""
 msgid "The service is disabled in Settings. Enable it there first."
 msgstr ""
 
-msgid "The service is not started on boot unless \"Enable on boot\" has been used at least once."
+msgid "This account does not expose a device list (API returned Not Found)."
 msgstr ""
 
 msgid "The table refreshes every 10 seconds while this page is open."

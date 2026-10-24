@@ -22,6 +22,13 @@ MFW=$(uci -q get usque.main.manage_firewall);  [ -n "$MFW" ] || MFW=1
 MDNS=$(uci -q get usque.main.manage_dns);      [ -n "$MDNS" ] || MDNS=1
 WANM=$(uci -q get usque.main.wan_metric);      [ -n "$WANM" ] || WANM=250
 DNS=$(uci -q get usque.main.dns);              [ -n "$DNS" ] || DNS=1.1.1.1
+HTTP2=$(uci -q get usque.main.http2);          [ -n "$HTTP2" ] || HTTP2=0
+IPV6=$(uci -q get usque.main.ipv6);            [ -n "$IPV6" ] || IPV6=0
+CONFIG=$(uci -q get usque.main.config);        [ -n "$CONFIG" ] || CONFIG=/etc/usque/config.json
+
+STATE=usque.routing_state
+EP4_ROUTE=usque_warp_ep4
+EP6_ROUTE=usque_warp_ep6
 
 log() { logger -t usque-routing "$*"; }
 say() { echo "== $*"; }
@@ -42,9 +49,209 @@ service_running() {
 	/etc/init.d/usque status >/dev/null 2>&1
 }
 
+is_on() {
+	case "${1:-0}" in
+		1|on|true|yes) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
+is_ipv4() {
+	printf '%s\n' "$1" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'
+}
+
+is_ipv6() {
+	printf '%s\n' "$1" | grep -Eq '^[0-9A-Fa-f:]+$' && printf '%s\n' "$1" | grep -q ':'
+}
+
+# Print "dev gateway" for the physical default route of one address family.
+physical_default() {
+	ip -"$1" route show default 2>/dev/null | awk -v t="$IFACE" '
+		{
+			dev = ""; gw = ""
+			for (i = 1; i <= NF; i++) {
+				if ($i == "via") gw = $(i + 1)
+				if ($i == "dev") dev = $(i + 1)
+			}
+			if (dev != "" && dev != t) { print dev " " gw; exit }
+		}'
+}
+
+physical_endpoint_route() {
+	ip -"$1" route get "$2" 2>/dev/null | awk -v t="$3" '
+		{
+			dev = ""; gw = ""
+			for (i = 1; i <= NF; i++) {
+				if ($i == "via") gw = $(i + 1)
+				if ($i == "dev") dev = $(i + 1)
+			}
+			if (dev != "" && dev != t) { print dev " " gw; exit }
+		}'
+}
+
+# Map the physical device back to a netifd logical interface so a config route
+# section can use interface 'wan' (or a renamed equivalent) rather than a device.
+logical_interface() {
+	local dev="$1" section candidate
+
+	[ -r /lib/functions/network.sh ] && . /lib/functions/network.sh
+	for section in $(uci -X show network 2>/dev/null |
+		sed -n 's/^network\.\([^.=]*\)=interface$/\1/p'); do
+		network_get_device candidate "$section" 2>/dev/null || continue
+		if [ "$candidate" = "$dev" ]; then
+			printf '%s' "$section"
+			return 0
+		fi
+	done
+
+	printf 'wan'
+}
+
+json_value() {
+	[ -r "$CONFIG" ] || return 1
+	command -v jsonfilter >/dev/null 2>&1 || return 1
+	jsonfilter -i "$CONFIG" -e "@.$1" 2>/dev/null
+}
+
+# Resolve the endpoint that usque will actually use with the saved settings.
+active_endpoint() {
+	local ep
+
+	if [ "$1" = 6 ]; then
+		if is_on "$HTTP2"; then
+			ep=$(uci -q get usque.main.endpoint_h2_v6)
+			[ -n "$ep" ] || ep=$(json_value endpoint_h2_v6)
+		else
+			ep=$(json_value endpoint_v6)
+		fi
+		is_ipv6 "$ep" || return 1
+	else
+		if is_on "$HTTP2"; then
+			ep=$(uci -q get usque.main.endpoint_h2_v4)
+			[ -n "$ep" ] || ep=$(json_value endpoint_h2_v4)
+			[ -n "$ep" ] || ep=162.159.198.2
+		else
+			ep=$(json_value endpoint_v4)
+		fi
+		is_ipv4 "$ep" || return 1
+	fi
+
+	printf '%s' "$ep"
+}
+
+# Strict mode has no WAN default route. Persist a host route for the WARP
+# endpoint only; this is the sole exception needed to bootstrap the tunnel and
+# is not a general-purpose leak path.
+set_endpoint_route() {
+	local fam="$1" ep="$2" dev gw iface
+
+	set -- $(physical_default "$fam")
+	dev="$1"; gw="$2"
+	if [ -z "$dev" ]; then
+		set -- $(physical_endpoint_route "$fam" "$ep" "$IFACE")
+		dev="$1"; gw="$2"
+	fi
+	if [ -z "$dev" ]; then
+		say "strict mode: no IPv$fam WAN default route; cannot install endpoint host route" >&2
+		return 1
+	fi
+	iface=$(logical_interface "$dev")
+
+	if [ "$fam" = 6 ]; then
+		if [ -n "$gw" ]; then
+			ip -6 route replace "$ep/128" via "$gw" dev "$dev" || return 1
+		else
+			ip -6 route replace "$ep/128" dev "$dev" || return 1
+		fi
+		uci -q set network.$EP6_ROUTE=route6
+		uci -q set network.$EP6_ROUTE.interface="$iface"
+		uci -q set network.$EP6_ROUTE.target="$ep/128"
+		[ -n "$gw" ] && uci -q set network.$EP6_ROUTE.gateway="$gw"
+		uci_q_del network.$EP4_ROUTE
+	else
+		if [ -n "$gw" ]; then
+			ip -4 route replace "$ep/32" via "$gw" dev "$dev" || return 1
+		else
+			ip -4 route replace "$ep/32" dev "$dev" || return 1
+		fi
+		uci -q set network.$EP4_ROUTE=route
+		uci -q set network.$EP4_ROUTE.interface="$iface"
+		uci -q set network.$EP4_ROUTE.target="$ep"
+		uci -q set network.$EP4_ROUTE.netmask=255.255.255.255
+		[ -n "$gw" ] && uci -q set network.$EP4_ROUTE.gateway="$gw"
+		uci_q_del network.$EP6_ROUTE
+	fi
+
+	echo "  endpoint host route: $ep -> dev $dev${gw:+ via $gw} ($iface)"
+}
+
+uci_q_del() {
+	uci -q get "$1" >/dev/null 2>&1 && uci -q delete "$1"
+	return 0
+}
+
+clear_endpoint_routes() {
+	uci_q_del network.$EP4_ROUTE
+	uci_q_del network.$EP6_ROUTE
+}
+
+# dnsmasq includes every dhcp/relay section without an `instance` selector in
+# every dnsmasq instance. Bind those sections to the main instance so the
+# warp_dns instance is DNS-only and cannot open a second DHCP listener.
+prepare_dns_instances() {
+	local target section
+
+	target=$(uci -q get $STATE.dhcp_instance_target)
+	if [ -z "$target" ]; then
+		target=$(uci -X show dhcp 2>/dev/null |
+			sed -n 's/^dhcp\.\([^.=]*\)=dnsmasq$/\1/p' | head -1)
+		if [ -z "$target" ]; then
+			say "dns: no dnsmasq instance found" >&2
+			return 1
+		fi
+		uci -q set $STATE=state || return 1
+		uci -q set $STATE.dhcp_instance_target="$target"
+	fi
+
+	for section in $(uci -X show dhcp 2>/dev/null |
+		sed -n 's/^dhcp\.\([^.=]*\)=\(dhcp\|relay\)$/\1/p'); do
+		uci -q get dhcp.$section.instance >/dev/null 2>&1 && continue
+		uci -q set dhcp.$section.instance="$target" || return 1
+		uci -q add_list $STATE.dhcp_instances="$section" || return 1
+		echo "  bind DHCP section $section to dnsmasq instance $target"
+	done
+}
+
+clear_dns_instances() {
+	local target section current
+
+	target=$(uci -q get $STATE.dhcp_instance_target)
+	[ -n "$target" ] || return 0
+
+	for section in $(uci -q get $STATE.dhcp_instances); do
+		current=$(uci -q get dhcp.$section.instance)
+		if [ "$current" = "$target" ]; then
+			uci -q delete dhcp.$section.instance
+		fi
+	done
+	uci_q_del $STATE
+}
+
 apply() {
+	local epfam ep
+
 	say "network: default route priority"
 	if [ "$STRICT" = 1 ]; then
+		if is_on "$IPV6"; then
+			epfam=6
+		else
+			epfam=4
+		fi
+		ep=$(active_endpoint "$epfam") || {
+			say "strict mode: cannot resolve the active IPv$epfam endpoint from $CONFIG" >&2
+			return 1
+		}
+		set_endpoint_route "$epfam" "$ep" || return 1
 		echo "  strict mode: WAN produces no default route"
 		uci -q set network.wan.defaultroute=0 || return 1
 		uci -q get network.wan6 >/dev/null 2>&1 && uci -q set network.wan6.defaultroute=0
@@ -52,6 +259,8 @@ apply() {
 		echo "  fallback mode: WAN default route metric=$WANM"
 		uci -q set network.wan.metric="$WANM" || return 1
 		uci_del network.wan.defaultroute || return 1
+		uci_del network.wan6.defaultroute || return 1
+		clear_endpoint_routes
 	fi
 
 	uci -q set network.warp=interface || return 1
@@ -83,11 +292,15 @@ apply() {
 		uci -q set firewall.lan_warp.dest=warp
 		uci -q commit firewall || return 1
 	else
-		say "firewall: skipped (manage_firewall=0)"
+		say "firewall: removing usque-owned zone and forwarding (manage_firewall=0)"
+		uci_del firewall.warp || return 1
+		uci_del firewall.lan_warp || return 1
+		uci -q commit firewall || return 1
 	fi
 
 	if [ "$MDNS" = 1 ]; then
 		say "dns: dnsmasq upstream through the tunnel"
+		prepare_dns_instances || return 1
 		uci -q set network.wan.peerdns=0 || return 1
 		uci_del network.wan.dns || return 1
 		uci -q add_list network.wan.dns="$DNS"
@@ -99,8 +312,15 @@ apply() {
 		uci -q set dhcp.warp_dns.strictorder=0
 		uci -q commit dhcp || return 1
 	else
-		say "dns: skipped (manage_dns=0)"
+		say "dns: removing usque-owned dnsmasq instance (manage_dns=0)"
+		uci_del dhcp.warp_dns || return 1
+		clear_dns_instances
+		uci -q set network.wan.peerdns=1
+		uci_del network.wan.dns || return 1
+		uci -q commit dhcp || return 1
+		uci -q commit network || return 1
 	fi
+	uci -q commit usque >/dev/null 2>&1
 
 	say "reloading network, firewall and dnsmasq"
 	/etc/init.d/network reload
@@ -126,11 +346,17 @@ revert() {
 	uci_del firewall.lan_warp
 	uci_del network.warp
 	uci_del dhcp.warp_dns
+	clear_dns_instances
+	clear_endpoint_routes
 	uci_del network.wan.metric
 	uci_del network.wan.defaultroute
+	uci_del network.wan6.defaultroute
 	uci -q set network.wan.peerdns=1
 	uci_del network.wan.dns
-	uci -q commit || return 1
+	uci -q commit network || return 1
+	uci -q commit firewall || return 1
+	uci -q commit dhcp || return 1
+	uci -q commit usque || return 1
 
 	say "reloading network, firewall and dnsmasq"
 	/etc/init.d/network reload

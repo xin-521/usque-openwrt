@@ -43,6 +43,20 @@ wan_default() {
         }'
 }
 
+# 严格模式不会保留 WAN 默认路由。此时依赖 usque-routing 预装的端点
+# host route，通过内核路由查询反推出 WAN 设备和网关。
+wan_endpoint_route() {
+    ip -"$1" route get "$2" 2>/dev/null | awk -v t="$3" '
+        {
+            dev = ""; gw = ""
+            for (i = 1; i <= NF; i++) {
+                if ($i == "via") gw = $(i + 1)
+                if ($i == "dev") dev = $(i + 1)
+            }
+            if (dev != "" && dev != t) { print dev " " gw; exit }
+        }'
+}
+
 # ---------------------------------------------------------------------------
 # 0. 解析端点地址（去掉端口，识别 v4 / v6）
 # ---------------------------------------------------------------------------
@@ -59,7 +73,14 @@ if [ -n "$EPADDR" ]; then
     set -- $(wan_default "$EPFAM" "$IFACE")
     WANDEV="$1"; WANGW="$2"
     if [ -z "$WANDEV" ]; then
-        log "ERROR: 找不到可用的物理默认路由，不接管默认路由（保持原状）"
+        set -- $(wan_endpoint_route "$EPFAM" "$EPADDR" "$IFACE")
+        WANDEV="$1"; WANGW="$2"
+        if [ -n "$WANDEV" ]; then
+            log "未找到物理默认路由，使用端点 host route: dev $WANDEV ${WANGW:+via $WANGW}"
+        fi
+    fi
+    if [ -z "$WANDEV" ]; then
+        log "ERROR: 找不到可用的物理默认路由或端点 host route，不接管默认路由（保持原状）"
         exit 1
     fi
     VIA=""

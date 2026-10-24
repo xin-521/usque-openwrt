@@ -67,6 +67,7 @@ var ERROR_TEXT = {
 	'routing-helper-missing': _('The routing helper /usr/libexec/usque-routing is missing.'),
 	'no-http-client': _('Neither curl nor uclient-fetch is installed.'),
 	'backup-failed': _('Could not move the existing configuration aside.'),
+	'devices-unavailable': _('This account does not expose a device list (API returned Not Found).'),
 	'bad-action': _('Unsupported action.'),
 	'unknown error': _('unknown error')
 };

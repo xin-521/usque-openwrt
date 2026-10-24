@@ -449,6 +449,11 @@ Because endpoints cannot be reliably pulled from the API, you can manage HTTP/2 
 - `endpoint_h2_v4`: IPv4 address for HTTP/2 mode.
 - `endpoint_h2_v6`: IPv6 address for HTTP/2 mode.
 
+The `nativetun` command also accepts `--http2-endpoint-v4 <ip>` and
+`--http2-endpoint-v6 <ip>` to override those fields for one process. This is
+used by the OpenWrt service so LuCI can change the endpoint without rewriting
+the credential file.
+
 Default behavior:
 
 - If `endpoint_h2_v4` is not set, `usque` uses `162.159.198.2`.

@@ -1,7 +1,10 @@
 #!/bin/sh
 # Make sure the usque service has a procd start symlink; the UCI option
 # usque.main.enabled is still the runtime master switch.
+MARKER=/etc/usque/.autostart-initialized
+[ -e "$MARKER" ] && exit 0
 [ -x /etc/init.d/usque ] || exit 0
 [ -x /usr/bin/usque ] || exit 0
 /etc/init.d/usque enable >/dev/null 2>&1
+touch "$MARKER"
 exit 0

@@ -15,8 +15,8 @@
 
 ```sh
 cd /tmp
-apk add --allow-untrusted ./usque-4.2.1-r6.<你的架构>.apk
-apk add --allow-untrusted ./luci-app-usque-1.2.0-r3.noarch.apk
+apk add --allow-untrusted ./usque-4.2.1-r7.<你的架构>.apk
+apk add --allow-untrusted ./luci-app-usque-1.2.0-r4.noarch.apk
 /etc/init.d/rpcd restart
 rm -rf /tmp/luci-*
 ```
@@ -67,7 +67,9 @@ rm -rf /tmp/luci-*
 | Enable on boot | `/etc/init.d/usque enable` | 生成 `/etc/rc.d/S95usque`，重启后自启 |
 | Disable on boot | `/etc/init.d/usque disable` | 取消自启（不影响当前运行） |
 
-> 服务不会随开机自启，除非至少点过一次 **Enable on boot**；重装包也不会自动自启。
+> 首次安装 `luci-app-usque` 时会自动启用开机自启，并写入
+> `/etc/usque/.autostart-initialized` 作为一次性标记。之后若手动点
+> **Disable on boot**，后续升级不会覆盖你的选择。
 
 ## 5. 出口检测页（Egress check）
 
@@ -92,7 +94,9 @@ rm -rf /tmp/luci-*
 
 需要已有配置和网络：
 
-- **Account info / Devices**：查看账户与已注册设备。
+- **Account info**：查看当前账户信息。
+- **Devices**：部分账户/API 不支持设备列表并返回 `Not Found`，此时界面会明确
+  提示“该账户不提供设备列表”，不影响隧道连接。
 - **Set license**：填入许可密钥（`xxxxxxxx-xxxxxxxx-xxxxxxxx`）。
 - **Reset license**：清除密钥。
 
@@ -118,6 +122,8 @@ rm -rf /tmp/luci-*
 | Configuration file | 凭证路径，默认 `/etc/usque/config.json` |
 | Always reconnect | 断线后持续重连 |
 | Use HTTP/2 over TCP | UDP/443 被封时改走 TCP+TLS |
+| HTTP/2 IPv4 endpoint | 可选，覆盖 `endpoint_h2_v4`；留空时用配置值或 `162.159.198.2` |
+| HTTP/2 IPv6 endpoint | HTTP/2 + IPv6 时必填；默认没有内置值 |
 | Use IPv6 endpoint | 用 IPv6 连 WARP 端点 |
 | TLS SNI | 可选伪装 SNI，对抗 DPI |
 | Connect port | 默认 443 |
@@ -132,13 +138,18 @@ rm -rf /tmp/luci-*
 |------|------|
 | Tunnel route metric | 隧道路由 metric，默认 10，必须小于 WAN |
 | WAN fallback metric | WAN 路由 metric，默认 250；隧道断了才轮到它 |
-| Strict mode | 删掉 WAN 默认路由，断线即断网、不回落 |
+| Strict mode | 删掉 WAN 默认路由，断线即断网、不回落；仅为 WARP 端点保留一条宿主机路由以便重连 |
 | Manage firewall | 创建 `warp` 区域、LAN→warp 转发与 NAT |
 | Manage DNS | 把 dnsmasq 上游指向 `dns`，防 DNS 泄漏 |
 | DNS server | 默认 `1.1.1.1` |
 
 **Apply routing** 才真正写入 network/firewall/dhcp 并重载；只保存不点不会生效。
 **Revert routing** 会先停 usque，再删除上述 UCI 条目并重载。
+
+关闭 **Manage firewall** 后再次 Apply 会删除本应用创建的 `warp` zone 与
+LAN→warp forwarding；关闭 **Manage DNS** 会删除 `warp_dns` dnsmasq 实例、
+恢复 WAN 自动 DNS，并解除 DHCP 配置段的实例绑定。`warp_dns` 只负责 DNS，
+不会再次监听 UDP 67。
 
 ## 9. 命令行等价操作
 
@@ -164,7 +175,7 @@ ubus 调用见 [`luci-app-usque/README.md`](../luci-app-usque/README.md#ubus-api
 | Logs 页空白 | 升级到 `luci-app-usque ≥ 1.2.0`：1.2.0 之前后端把 `logs` 的参数类型写成字符串 `'int'`，rpcd 注册成 String，浏览器发来的数字 `{"lines":200}` 会被 `UBUS_STATUS_INVALID_ARGUMENT` 拒掉；升级后仍空白说明服务没在跑（`/etc/init.d/usque status`），没跑就没有日志 |
 | 有接口但无法上网 | 查 IPv4 default route 是否指向隧道；先关 Strict 再试 |
 | 出口仍是本地 IP | 重新 Apply routing；确认 Egress self-test 为 through tunnel |
-| UDP/443 被封 | 设置里开 **Use HTTP/2 over TCP** |
+| UDP/443 被封 | 设置里开 **Use HTTP/2 over TCP**；日志出现 `tls: access denied` 表示 Cloudflare 拒绝该账户/端点，换 **HTTP/2 IPv4 endpoint** 再试 |
 | DNS 泄漏 | 开 Manage DNS，或手动把 dnsmasq 上游指到隧道内 DNS |
 | 想临时恢复直连 | Stop 服务；或 Apply 后点 Revert routing |
 

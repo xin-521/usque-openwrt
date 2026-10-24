@@ -21,7 +21,7 @@ SRC="$ROOT/luci-app-usque"
 
 NAME=luci-app-usque
 VER=1.2.0
-REL=3
+REL=4
 # apk v3 uses "noarch" for architecture-independent packages; "all" is not
 # a valid apk arch and makes the package uninstallable.
 ARCH=${1:-noarch}
@@ -77,6 +77,10 @@ chmod 644 "$PKG"/usr/share/luci/menu.d/*.json "$PKG"/usr/share/rpcd/acl.d/*.json
 mkdir -p "$STAGE/scripts"
 cat > "$STAGE/scripts/post-install" <<'EOS'
 #!/bin/sh
+[ -x /etc/uci-defaults/95-luci-app-usque ] && {
+	/etc/uci-defaults/95-luci-app-usque >/dev/null 2>&1
+	rm -f /etc/uci-defaults/95-luci-app-usque
+}
 [ -x /etc/init.d/rpcd ] && /etc/init.d/rpcd restart >/dev/null 2>&1
 exit 0
 EOS

@@ -44,7 +44,7 @@ is_on() {
 start_service() {
 	[ -x "$PROG" ] || { logger -t usque "executable not found: $PROG"; return 1; }
 
-	local enabled config iface always http2 ipv6 sni port keepalive rdelay mtu
+	local enabled config iface always http2 h2v4 h2v6 ipv6 sni port keepalive rdelay mtu
 	local insecure no4 no6 tun_metric wan_metric
 
 	enabled=$(cfg enabled 1)
@@ -65,6 +65,8 @@ start_service() {
 	iface=$(cfg iface "$USQUE_IFACE")
 	always=$(cfg always_reconnect 1)
 	http2=$(cfg http2 0)
+	h2v4=$(cfg endpoint_h2_v4 "")
+	h2v6=$(cfg endpoint_h2_v6 "")
 	ipv6=$(cfg ipv6 0)
 	sni=$(cfg sni "")
 	port=$(cfg port 443)
@@ -84,6 +86,8 @@ start_service() {
 
 	is_on "$always" && set -- "$@" --always-reconnect
 	is_on "$http2" && set -- "$@" --http2
+	[ -n "$h2v4" ] && set -- "$@" --http2-endpoint-v4 "$h2v4"
+	[ -n "$h2v6" ] && set -- "$@" --http2-endpoint-v6 "$h2v6"
 	is_on "$ipv6" && set -- "$@" -6
 	is_on "$insecure" && set -- "$@" --insecure
 	[ -n "$sni" ] && set -- "$@" -s "$sni"

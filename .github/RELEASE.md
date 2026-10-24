@@ -10,7 +10,27 @@ OpenWrt 25.x 的 usque（Cloudflare WARP / MASQUE）客户端与 LuCI 界面，�
 
 `<arch>` 与路由器 `apk info --print-arch` 一致；LuCI 包为 `noarch`。包未签名，安装需 `--allow-untrusted`。
 
-## 本次变更（r6）
+## 本次变更（r7）
+
+- 修复 Strict mode 开局断网：Apply 时先为当前 WARP 端点写入仅走 WAN 的
+  host route（`network.usque_warp_ep4/6`），再移除 WAN 默认路由；`up.sh`
+  在没有默认路由时会从该端点路由反推 WAN 设备和网关。退出 Strict 或
+  Revert 时会删除 helper route 及 `wan6.defaultroute=0`
+- 修复 dnsmasq `warp_dns` 实例继承 DHCP range 并重复监听 UDP 67：将现有
+  DHCP/relay 段绑定到主 dnsmasq 实例，让 `warp_dns` 只负责 DNS
+- 关闭 Manage firewall / Manage DNS 后再 Apply 会主动删除旧 zone、
+  forwarding、`warp_dns` 实例并恢复 WAN 自动 DNS，不再残留配置
+- 状态页 uptime 改由 `/proc/<pid>/stat` 与 `/proc/uptime` 计算；
+  procd 不返回 uptime 时不再永远显示 0
+- 首次安装 `luci-app-usque` 自动执行一次 `usque enable`；标记文件避免升级
+  覆盖用户之后手动关闭的自启
+- 新增 `endpoint_h2_v4` / `endpoint_h2_v6` 设置及 nativetun 覆盖参数，
+  HTTP/2 日志会明确指出端点/账户被 `tls: access denied` 拒绝。该错误来自
+  Cloudflare 服务端策略，不是界面开关失效
+- 账户 API 返回 `Not Found` 时，Devices 操作显示明确的不支持提示
+- usque **4.2.1-r7**；LuCI **1.2.0-r4**
+
+## 上一版（r6）
 
 - 修复 LuCI 所有页面报 `TypeError: "usque.common" factory yields invalid constructor`：LuCI 客户端 `require()` 只接受返回 `L.Class` 子类的模块工厂（加载时用 `Class.isSubclass` 校验，失败即抛此错），而共享模块 `usque/common.js` 之前 `return {...}` 返回的是普通对象。状态、服务控制、出口检测、注册账户、日志等页面都会 `'require usque.common as usque'`，因此全部在加载该模块时中断。现改为 `return L.Class.extend({...})`，与官方共享模块 `tools/widgets.js`、`tools/views.js` 写法一致
 - LuCI 包版本 **1.2.0-r3**；usque 二进制与 r5 相同（本版仅含 LuCI 修复）

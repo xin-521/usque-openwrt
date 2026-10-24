@@ -68,8 +68,8 @@ APK_STATIC=/path/to/apk.static sh tools/build-luci-apk.sh noarch
 路由器上：
 
 ```sh
-apk add --allow-untrusted usque-4.2.1-r6.<arch>.apk \
-                       luci-app-usque-1.2.0-r3.noarch.apk
+apk add --allow-untrusted usque-4.2.1-r7.<arch>.apk \
+                       luci-app-usque-1.2.0-r4.noarch.apk
 /etc/init.d/rpcd restart
 rm -rf /tmp/luci-*
 ```
@@ -118,8 +118,14 @@ ubus call luci.usque stat '{}'
   `[A-Za-z0-9._-]`；许可密钥 `[A-Za-z0-9-]`（8–64）；接口名、配置路径均做白名单校验。
 - `routing apply` 安装 warp 接口、路由优先级、防火墙与 DNS 上游，并重载
   network/firewall/dnsmasq；参数全部来自 UCI，浏览器不传命令。
+- 严格模式会为当前 WARP 端点持久化一条仅指向 WAN 的 host route
+  （`network.usque_warp_ep4/6`）。没有 WAN 默认路由时，`up.sh` 用这条
+  最小例外路由推导 WAN 设备/网关，因此重启和断线重连不会卡死。
+- 受管 DNS 的独立 dnsmasq 实例通过 `instance` 归属隔离：现有 DHCP/relay
+  配置段只属于主 dnsmasq 实例，`warp_dns` 不再继承 DHCP range 或监听 UDP 67。
 - `routing revert` 先停 usque，再删除 warp 接口、防火墙、DNS 的 UCI 条目并
-  重载 network/firewall/dnsmasq。
+  重载 network/firewall/dnsmasq；同时删除严格模式 host route 和
+  `wan/wan6` 的 `defaultroute=0`。
 
 ## UCI 选项（`/etc/config/usque`，段 `main`）
 
@@ -130,6 +136,8 @@ ubus call luci.usque stat '{}'
 | `config` | `/etc/usque/config.json` | 设备凭证路径 |
 | `always_reconnect` | `1` | `--always-reconnect` |
 | `http2` | `0` | `--http2`（TCP+TLS） |
+| `endpoint_h2_v4` | 空 | 覆盖 `endpoint_h2_v4`；空时用配置值或 `162.159.198.2` |
+| `endpoint_h2_v6` | 空 | 覆盖 `endpoint_h2_v6`；HTTP/2 + IPv6 时必填 |
 | `ipv6` | `0` | `-6`（IPv6 端点） |
 | `sni` | 空 | `-s` |
 | `port` | `443` | `-P` |
@@ -144,6 +152,11 @@ ubus call luci.usque stat '{}'
 | `manage_firewall` | `1` | 应用路由时创建 warp 区域/转发/NAT |
 | `manage_dns` | `1` | 应用路由时改 dnsmasq 上游 |
 | `dns` | `1.1.1.1` | 上游 DNS |
+
+关闭 `manage_firewall` 或 `manage_dns` 后再次 Apply 会主动删除本应用创建的
+防火墙 zone/forwarding 或 `warp_dns` 实例，而不是只跳过写入。首次安装时
+`luci-app-usque` 会执行一次 `usque enable`；标记文件
+`/etc/usque/.autostart-initialized` 防止后续升级覆盖用户手动关闭的自启。
 
 ## 与旧 options.sh 的兼容
 

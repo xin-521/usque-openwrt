@@ -128,6 +128,24 @@ function cfg(map, name, def) {
 	return v;
 }
 
+function process_uptime(pid) {
+	if (pid <= 0)
+		return 0;
+
+	let up = run("cut -d' ' -f1 /proc/uptime 2>/dev/null");
+	let started = run("awk '{ print $22 }' /proc/" + pid + "/stat 2>/dev/null");
+	if (up.code != 0 || started.code != 0)
+		return 0;
+
+	let hz = run('getconf CLK_TCK 2>/dev/null');
+	let ticks = int(hz.out);
+	if (ticks <= 0)
+		ticks = 100;
+
+	let seconds = int(up.out) - int(int(started.out) / ticks);
+	return seconds > 0 ? seconds : 0;
+}
+
 function service_info() {
 	let info = { running: false, pid: 0, uptime: 0, autostart: access(AUTOSTART, 'x') ? true : false };
 	let r = run("ubus call service list '{\"name\":\"usque\"}' 2>/dev/null");
@@ -154,6 +172,8 @@ function service_info() {
 			info.running = true;
 			info.pid = int(it['pid'] || 0);
 			info.uptime = int(it['uptime'] || 0);
+			if (info.uptime <= 0)
+				info.uptime = process_uptime(info.pid);
 		}
 	}
 
@@ -308,6 +328,8 @@ function uci_summary(map) {
 		config: cfg(map, 'config', DEFCFG),
 		always_reconnect: cfg(map, 'always_reconnect', '1'),
 		http2: cfg(map, 'http2', '0'),
+		endpoint_h2_v4: cfg(map, 'endpoint_h2_v4', ''),
+		endpoint_h2_v6: cfg(map, 'endpoint_h2_v6', ''),
 		ipv6: cfg(map, 'ipv6', '0'),
 		sni: cfg(map, 'sni', ''),
 		port: cfg(map, 'port', '443'),
@@ -564,6 +586,9 @@ const methods = {
 			cmd += ' 2>&1';
 
 			let r = run(cmd);
+
+			if (action == 'devices' && r.code != 0 && match(r.out, /Not Found/) != null)
+				return { ok: false, error: 'devices-unavailable', output: r.out };
 
 			return { ok: r.code == 0, code: r.code, output: r.out };
 		}

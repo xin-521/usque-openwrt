@@ -19,6 +19,17 @@ func LogHTTP2Endpoint(endpoint net.Addr) {
 	log.Printf("Using HTTP/2 endpoint %s", endpoint.String())
 }
 
+// OverrideHTTP2Endpoints applies per-process endpoint overrides supplied by
+// the service manager without modifying the credential file on disk.
+func OverrideHTTP2Endpoints(v4, v6 string) {
+	if v4 != "" {
+		AppConfig.EndpointH2V4 = v4
+	}
+	if v6 != "" {
+		AppConfig.EndpointH2V6 = v6
+	}
+}
+
 // WarnInsecure prints a warning when certificate pinning is disabled.
 func WarnInsecure() {
 	log.Println("WARNING: --insecure is set, endpoint certificate pinning is disabled. Do not use in production!")

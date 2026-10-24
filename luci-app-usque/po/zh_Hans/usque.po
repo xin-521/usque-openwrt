@@ -19,6 +19,9 @@ msgstr "账户信息"
 msgid "Always reconnect"
 msgstr "始终重连"
 
+msgid "Autostart is enabled once when the package is first installed. You can disable it here at any time."
+msgstr "首次安装软件包时会自动启用开机自启，之后可随时在此关闭。"
+
 msgid "Apply routing"
 msgstr "应用路由"
 
@@ -115,6 +118,12 @@ msgstr "失败：%s"
 msgid "Fetches https://www.cloudflare.com/cdn-cgi/trace and shows the public IP and WARP state. Requires curl or uclient-fetch."
 msgstr "访问 https://www.cloudflare.com/cdn-cgi/trace 并显示公网 IP 与 WARP 状态，需要 curl 或 uclient-fetch。"
 
+msgid "HTTP/2 IPv4 endpoint"
+msgstr "HTTP/2 IPv4 端点"
+
+msgid "HTTP/2 IPv6 endpoint"
+msgstr "HTTP/2 IPv6 端点"
+
 msgid "Installs the warp interface, default route priority, firewall zone and DNS upstream from the saved settings."
 msgstr "按已保存的设置安装 warp 接口、默认路由优先级、防火墙区域与 DNS 上游。"
 
@@ -190,14 +199,20 @@ msgstr "无"
 msgid "not through tunnel"
 msgstr "未经过隧道"
 
+msgid "not set"
+msgstr "未设置"
+
 msgid "Optional -s value. A harmless SNI such as www.bing.com can help against DPI."
 msgstr "可选的 -s 值。使用 www.bing.com 之类的无害 SNI 有助于对抗 DPI。"
+
+msgid "Optional override for endpoint_h2_v4. Leave empty to use the endpoint stored in config.json, or 162.159.198.2 when it is unset."
+msgstr "可选，覆盖 endpoint_h2_v4。留空时使用 config.json 中的值；该值也未设置时使用 162.159.198.2。"
 
 msgid "Pass --always-reconnect so the tunnel is re-established even when idle."
 msgstr "传入 --always-reconnect，空闲时也会保持重连。"
 
-msgid "Pass --http2 to use TCP+TLS instead of QUIC when UDP/443 is blocked."
-msgstr "传入 --http2，UDP/443 被封时改用 TCP+TLS。"
+msgid "Pass --http2 to use TCP+TLS instead of QUIC when UDP/443 is blocked. If logs report \"tls: access denied\", Cloudflare rejected this account or endpoint for HTTP/2; try another endpoint."
+msgstr "传入 --http2，UDP/443 被封时改用 TCP+TLS。若日志出现“tls: access denied”，表示 Cloudflare 拒绝了该账户或端点的 HTTP/2 连接，请尝试其他端点。"
 
 msgid "Pass --insecure. Troubleshooting only: it removes protection against man-in-the-middle attacks."
 msgstr "传入 --insecure。仅用于排障：会失去对中间人攻击的防护。"
@@ -267,6 +282,9 @@ msgstr "完全移除 WAN 默认路由，隧道断开时绝不回退到 ISP。"
 
 msgid "Requires network access and an existing configuration file."
 msgstr "需要网络访问，且已存在配置文件。"
+
+msgid "Required when both HTTP/2 and IPv6 endpoint are enabled. The usque default is empty."
+msgstr "同时启用 HTTP/2 与 IPv6 端点时必填；usque 默认值为空。"
 
 msgid "Reset license"
 msgstr "重置许可"
@@ -352,8 +370,8 @@ msgstr "路由助手 /usr/libexec/usque-routing 不存在。"
 msgid "The service is disabled in Settings. Enable it there first."
 msgstr "服务已在设置中禁用，请先在设置里启用。"
 
-msgid "The service is not started on boot unless \"Enable on boot\" has been used at least once."
-msgstr "除非执行过“开机自启”，否则服务不会随开机启动。"
+msgid "This account does not expose a device list (API returned Not Found)."
+msgstr "该账户不提供设备列表（API 返回 Not Found）。"
 
 msgid "The table refreshes every 10 seconds while this page is open."
 msgstr "页面打开期间每 10 秒自动刷新。"

@@ -7,7 +7,7 @@ LUCI_PKGARCH:=all
 LUCI_LANG.zh_Hans:=简体中文
 
 PKG_VERSION:=1.2.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_LICENSE:=Apache-2.0
 PKG_MAINTAINER:=usque-openwrt contributors
 
@@ -21,6 +21,10 @@ include ../../luci.mk
 # tools/build-luci-apk.sh registers the same file under both script names.
 define Package/luci-app-usque/postinst
 #!/bin/sh
+[ -x /etc/uci-defaults/95-luci-app-usque ] && {
+	/etc/uci-defaults/95-luci-app-usque >/dev/null 2>&1
+	rm -f /etc/uci-defaults/95-luci-app-usque
+}
 [ -x /etc/init.d/rpcd ] && /etc/init.d/rpcd restart >/dev/null 2>&1
 exit 0
 endef

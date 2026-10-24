@@ -25,7 +25,7 @@ return view.extend({
 					usque.button(_('Disable on boot'), ui.createHandlerFn(this, 'handleControl', 'disable'), 'cbi-button-neutral')
 				]),
 				usque.note(_('Stopping the service removes the tunnel route; the WAN fallback route takes over.')),
-				usque.note(_('The service is not started on boot unless "Enable on boot" has been used at least once.'))
+				usque.note(_('Autostart is enabled once when the package is first installed. You can disable it here at any time.'))
 			])
 		]);
 	},

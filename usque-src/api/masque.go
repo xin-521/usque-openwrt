@@ -131,7 +131,10 @@ func ConnectTunnel(ctx context.Context, tlsConfig *tls.Config, quicConfig *quic.
 		ipConn, rsp, err := connectip.DialH2(ctx, h2Client, template, h2Headers)
 		if err != nil {
 			if strings.Contains(err.Error(), "tls: access denied") {
-				return nil, nil, nil, nil, errors.New("login failed! Please double-check if your tls key and cert is enrolled in the Cloudflare Access service")
+				return nil, nil, nil, nil, fmt.Errorf(
+					"HTTP/2 endpoint %s rejected the client certificate (tls: access denied); "+
+						"verify that this account is eligible for HTTP/2 and that the selected endpoint supports it",
+					h2Endpoint)
 			}
 			return nil, nil, nil, nil, fmt.Errorf("failed to dial connect-ip over HTTP/2: %w", err)
 		}

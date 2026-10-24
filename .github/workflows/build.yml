@@ -36,7 +36,7 @@ jobs:
           ref="${GITHUB_REF_NAME#v}"
           case "$ref" in
             *-r*) echo "ver=${ref%%-r*}" >> "$GITHUB_OUTPUT"; echo "rel=${ref##*-r}" >> "$GITHUB_OUTPUT" ;;
-            *)    echo "ver=4.2.1" >> "$GITHUB_OUTPUT"; echo "rel=1" >> "$GITHUB_OUTPUT" ;;
+            *)    echo "ver=4.2.1" >> "$GITHUB_OUTPUT"; echo "rel=7" >> "$GITHUB_OUTPUT" ;;
           esac
 
       - uses: actions/setup-go@v5

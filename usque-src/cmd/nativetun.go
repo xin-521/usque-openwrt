@@ -94,6 +94,18 @@ var nativeTunCmd = &cobra.Command{
 			return
 		}
 
+		h2EndpointV4, err := cmd.Flags().GetString("http2-endpoint-v4")
+		if err != nil {
+			cmd.Printf("Failed to get HTTP/2 IPv4 endpoint: %v\n", err)
+			return
+		}
+		h2EndpointV6, err := cmd.Flags().GetString("http2-endpoint-v6")
+		if err != nil {
+			cmd.Printf("Failed to get HTTP/2 IPv6 endpoint: %v\n", err)
+			return
+		}
+		config.OverrideHTTP2Endpoints(h2EndpointV4, h2EndpointV6)
+
 		endpoint, err := config.SelectEndpointFromConfig(useHTTP2, useIPv6, connectPort)
 		if err != nil {
 			cmd.Printf("Failed to select endpoint: %v\n", err)
@@ -237,6 +249,8 @@ func init() {
 	nativeTunCmd.Flags().DurationP("reconnect-delay", "r", 1*time.Second, "Delay between reconnect attempts")
 	nativeTunCmd.Flags().Bool("always-reconnect", false, "Always reconnect after tunnel loss, even when idle")
 	nativeTunCmd.Flags().Bool("http2", false, "Use HTTP/2 over TCP+TLS instead of HTTP/3 over QUIC."+config.EndpointHelpSuffixH2)
+	nativeTunCmd.Flags().String("http2-endpoint-v4", "", "Override config endpoint_h2_v4 for this process")
+	nativeTunCmd.Flags().String("http2-endpoint-v6", "", "Override config endpoint_h2_v6 for this process")
 	nativeTunCmd.Flags().Bool("insecure", false, "Disable endpoint certificate pinning and trust any certificate")
 	nativeTunCmd.Flags().StringP("interface-name", "n", "", "Custom interface name for the TUN interface")
 	nativeTunCmd.Flags().Bool("persist", false, "Linux only: Keep the TUN interface after exit")

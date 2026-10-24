@@ -55,7 +55,17 @@ return view.extend({
 		o.default = '1';
 
 		o = s.option(form.Flag, 'http2', _('Use HTTP/2 over TCP'),
-			_('Pass --http2 to use TCP+TLS instead of QUIC when UDP/443 is blocked.'));
+			_('Pass --http2 to use TCP+TLS instead of QUIC when UDP/443 is blocked. If logs report "tls: access denied", Cloudflare rejected this account or endpoint for HTTP/2; try another endpoint.'));
+
+		o = s.option(form.Value, 'endpoint_h2_v4', _('HTTP/2 IPv4 endpoint'),
+			_('Optional override for endpoint_h2_v4. Leave empty to use the endpoint stored in config.json, or 162.159.198.2 when it is unset.'));
+		o.datatype = 'ip4addr';
+		o.placeholder = '162.159.198.2';
+
+		o = s.option(form.Value, 'endpoint_h2_v6', _('HTTP/2 IPv6 endpoint'),
+			_('Required when both HTTP/2 and IPv6 endpoint are enabled. The usque default is empty.'));
+		o.datatype = 'ip6addr';
+		o.placeholder = _('not set');
 
 		o = s.option(form.Flag, 'ipv6', _('Use IPv6 endpoint'),
 			_('Pass -6 to connect to the WARP endpoint over IPv6.'));
