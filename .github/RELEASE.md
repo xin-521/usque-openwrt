@@ -10,7 +10,15 @@ OpenWrt 25.x 的 usque（Cloudflare WARP / MASQUE）客户端与 LuCI 界面，�
 
 `<arch>` 与路由器 `apk info --print-arch` 一致；LuCI 包为 `noarch`。包未签名，安装需 `--allow-untrusted`。
 
-## 本次变更（r4）
+## 本次变更（r5）
+
+- LuCI 界面拆成 6 个独立页面（与「设置」同级）：**状态 / 服务控制 / 出口检测 / 注册账户 / 日志 / 设置**。启停与开机自启集中在「服务控制」页；日志独立成页，带行数选择（100/200/500/1000）与 10 秒自动刷新；注册与账户合并为一页
+- 修复「日志页永远空白」：后端 `logs` 的 ubus 参数类型声明错误（写成字符串 `'int'`，rpcd 会按 String 注册），浏览器发来的 `{"lines":200}` 在进入函数前就被 `UBUS_STATUS_INVALID_ARGUMENT` 拒掉，前端又把错误吞成「暂无日志」。改为 int32 后日志正常显示，出错也会显示明确提示而不是留白
+- 修复升级后后端不生效：apk 只在全新安装时执行 `post-install`，替换已装包走 `post-upgrade`；此前只注册了前者，`apk add <新包>` 之后 rpcd 仍使用旧版 `luci.usque`（表现同样是日志页空白）。现在两个脚本名都注册，升级会自动重启 rpcd
+- 中文翻译 138 条（含菜单标题）；LuCI 包版本 **1.2.0-r2**
+- 提示：服务不会随开机自启，需要在「服务控制」页点一次 **Enable on boot**
+
+## 上一版（r4）
 
 - LuCI 注册使用团队令牌时不再卡在 `Do you want to overwrite it? (y/n)`：注册前自动把旧配置改名为 `config.json.bak`，失败自动还原；命令 stdin 接 `/dev/null`，rpcd 下不会等待交互输入
 - 团队令牌支持直接粘贴裸 JWT、`.../auth?token=...` 登录链接或整段 `<meta http-equiv="refresh" ...>` 片段，后端自动提取其中的 token
