@@ -21,7 +21,7 @@ SRC="$ROOT/luci-app-usque"
 
 NAME=luci-app-usque
 VER=1.2.0
-REL=1
+REL=2
 # apk v3 uses "noarch" for architecture-independent packages; "all" is not
 # a valid apk arch and makes the package uninstallable.
 ARCH=${1:-noarch}
@@ -98,6 +98,8 @@ RM_OUT=0
 [ -f "$OUT" ] && RM_OUT=1
 [ "$RM_OUT" = 1 ] && rm -f "$OUT"
 
+# apk runs post-upgrade (not post-install) when replacing an installed package;
+# the same body is enough here because it never reads PKG_UPGRADE.
 "$APK_STATIC" mkpkg \
 	--info "name:${NAME}" \
 	--info "version:${VER}-r${REL}" \
@@ -109,6 +111,7 @@ RM_OUT=0
 	--info "depends:ucode-mod-fs" \
 	--info "depends:usque" \
 	--script "post-install:$STAGE/scripts/post-install" \
+	--script "post-upgrade:$STAGE/scripts/post-install" \
 	--files "$PKG" \
 	--output "$OUT"
 
