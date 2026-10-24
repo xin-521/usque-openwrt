@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=usque
 PKG_VERSION:=4.2.1
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 
 PKG_LICENSE:=MIT
 PKG_MAINTAINER:=usque-openwrt contributors

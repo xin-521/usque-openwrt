@@ -10,7 +10,16 @@ OpenWrt 25.x 的 usque（Cloudflare WARP / MASQUE）客户端与 LuCI 界面，�
 
 `<arch>` 与路由器 `apk info --print-arch` 一致；LuCI 包为 `noarch`。包未签名，安装需 `--allow-untrusted`。
 
-## 本次变更（r8）
+## 本次变更（r9）
+
+- 修复受管 DNS 的 `warp_dns` 第二 dnsmasq 实例争抢 53 端口并反复崩溃：
+  r7/r8 生成的实例没有独立端口，会与主实例同时绑定 `192.168.1.1:53`
+  与 `127.0.0.1:53`，最终进入 procd crash loop
+- Manage DNS 现在只设置主 dnsmasq 的 WAN 上游；Apply/Revert 会删除遗留的
+  `warp_dns` 配置、旧的实例标记和 DHCP `instance` 绑定
+- usque **4.2.1-r9**；LuCI **1.2.0-r5**
+
+## 上一版（r8）
 
 - 修复状态页 uptime 仍显示 0：ucode 的 `int()` 不接受 `/proc/uptime`
   的小数文本，现在先截取整数部分再计算

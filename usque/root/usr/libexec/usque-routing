@@ -212,45 +212,21 @@ clear_endpoint_routes() {
 	uci_q_del network.$EP6_ROUTE
 }
 
-# dnsmasq includes every dhcp/relay section without an `instance` selector in
-# every dnsmasq instance. Bind those sections to the main instance so the
-# warp_dns instance is DNS-only and cannot open a second DHCP listener.
-prepare_dns_instances() {
-	local target section
-
-	target=$(uci -q get $STATE.dhcp_instance_target)
-	if [ -z "$target" ]; then
-		target=$(uci -X show dhcp 2>/dev/null |
-			sed -n 's/^dhcp\.\([^.=]*\)=dnsmasq$/\1/p' | head -1)
-		if [ -z "$target" ]; then
-			say "dns: no dnsmasq instance found" >&2
-			return 1
-		fi
-		uci -q set $STATE=state || return 1
-		uci -q set $STATE.dhcp_instance_target="$target"
-	fi
-
-	for section in $(uci -X show dhcp 2>/dev/null |
-		sed -n 's/^dhcp\.\([^.=]*\)=\(dhcp\|relay\)$/\1/p'); do
-		uci -q get dhcp.$section.instance >/dev/null 2>&1 && continue
-		uci -q set dhcp.$section.instance="$target" || return 1
-		uci -q add_list $STATE.dhcp_instances="$section" || return 1
-		echo "  bind DHCP section $section to dnsmasq instance $target"
-	done
-}
-
-clear_dns_instances() {
+# r7/r8 created a second dnsmasq instance named warp_dns. Multiple instances
+# cannot share the default DNS port, so the extra instance entered a crash
+# loop. Keep this migration helper to remove selectors added by those releases.
+clear_legacy_dns_instances() {
 	local target section current
 
 	target=$(uci -q get $STATE.dhcp_instance_target)
-	[ -n "$target" ] || return 0
-
-	for section in $(uci -q get $STATE.dhcp_instances); do
-		current=$(uci -q get dhcp.$section.instance)
-		if [ "$current" = "$target" ]; then
-			uci -q delete dhcp.$section.instance
-		fi
-	done
+	if [ -n "$target" ]; then
+		for section in $(uci -q get $STATE.dhcp_instances); do
+			current=$(uci -q get dhcp.$section.instance)
+			if [ "$current" = "$target" ]; then
+				uci -q delete dhcp.$section.instance
+			fi
+		done
+	fi
 	uci_q_del $STATE
 }
 
@@ -316,22 +292,18 @@ apply() {
 	fi
 
 	if [ "$MDNS" = 1 ]; then
-		say "dns: dnsmasq upstream through the tunnel"
-		prepare_dns_instances || return 1
+		say "dns: main dnsmasq upstream through the tunnel"
+		uci_del dhcp.warp_dns || return 1
+		clear_legacy_dns_instances
 		uci -q set network.wan.peerdns=0 || return 1
 		uci_del network.wan.dns || return 1
 		uci -q add_list network.wan.dns="$DNS"
 		uci -q commit network || return 1
-
-		uci -q set dhcp.warp_dns=dnsmasq || return 1
-		uci_del dhcp.warp_dns.server || return 1
-		uci -q add_list dhcp.warp_dns.server="$DNS"
-		uci -q set dhcp.warp_dns.strictorder=0
 		uci -q commit dhcp || return 1
 	else
-		say "dns: removing usque-owned dnsmasq instance (manage_dns=0)"
+		say "dns: removing legacy usque dnsmasq instance (manage_dns=0)"
 		uci_del dhcp.warp_dns || return 1
-		clear_dns_instances
+		clear_legacy_dns_instances
 		uci -q set network.wan.peerdns=1
 		uci_del network.wan.dns || return 1
 		uci -q commit dhcp || return 1
@@ -367,7 +339,7 @@ revert() {
 	uci_del firewall.lan_warp
 	uci_del network.warp
 	uci_del dhcp.warp_dns
-	clear_dns_instances
+	clear_legacy_dns_instances
 	clear_endpoint_routes
 	uci_del network.wan.metric
 	uci_del network.wan.defaultroute

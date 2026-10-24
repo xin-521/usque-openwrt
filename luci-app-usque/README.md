@@ -68,7 +68,7 @@ APK_STATIC=/path/to/apk.static sh tools/build-luci-apk.sh noarch
 路由器上：
 
 ```sh
-apk add --allow-untrusted usque-4.2.1-r8.<arch>.apk \
+apk add --allow-untrusted usque-4.2.1-r9.<arch>.apk \
                        luci-app-usque-1.2.0-r5.noarch.apk
 /etc/init.d/rpcd restart
 rm -rf /tmp/luci-*
@@ -121,8 +121,8 @@ ubus call luci.usque stat '{}'
 - 严格模式会为当前 WARP 端点持久化一条仅指向 WAN 的 host route
   （`network.usque_warp_ep4/6`）。没有 WAN 默认路由时，`up.sh` 用这条
   最小例外路由推导 WAN 设备/网关，因此重启和断线重连不会卡死。
-- 受管 DNS 的独立 dnsmasq 实例通过 `instance` 归属隔离：现有 DHCP/relay
-  配置段只属于主 dnsmasq 实例，`warp_dns` 不再继承 DHCP range 或监听 UDP 67。
+- 受管 DNS 直接使用主 dnsmasq 的 WAN 上游，不再创建第二个 dnsmasq 实例。
+  Apply 和 Revert 都会清理 r7/r8 遗留的 `warp_dns` 与实例绑定。
 - `routing revert` 先停 usque，再删除 warp 接口、防火墙、DNS 的 UCI 条目并
   重载 network/firewall/dnsmasq；同时删除严格模式 host route 和
   `wan/wan6` 的 `defaultroute=0`。
@@ -154,7 +154,7 @@ ubus call luci.usque stat '{}'
 | `dns` | `1.1.1.1` | 上游 DNS |
 
 关闭 `manage_firewall` 或 `manage_dns` 后再次 Apply 会主动删除本应用创建的
-防火墙 zone/forwarding 或 `warp_dns` 实例，而不是只跳过写入。首次安装时
+防火墙 zone/forwarding 或遗留的 `warp_dns` 实例，而不是只跳过写入。首次安装时
 `luci-app-usque` 会执行一次 `usque enable`；标记文件
 `/etc/usque/.autostart-initialized` 防止后续升级覆盖用户手动关闭的自启。
 

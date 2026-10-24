@@ -15,7 +15,7 @@
 
 ```sh
 cd /tmp
-apk add --allow-untrusted ./usque-4.2.1-r8.<你的架构>.apk
+apk add --allow-untrusted ./usque-4.2.1-r9.<你的架构>.apk
 apk add --allow-untrusted ./luci-app-usque-1.2.0-r5.noarch.apk
 /etc/init.d/rpcd restart
 rm -rf /tmp/luci-*
@@ -147,9 +147,9 @@ rm -rf /tmp/luci-*
 **Revert routing** 会先停 usque，再删除上述 UCI 条目并重载。
 
 关闭 **Manage firewall** 后再次 Apply 会删除本应用创建的 `warp` zone 与
-LAN→warp forwarding；关闭 **Manage DNS** 会删除 `warp_dns` dnsmasq 实例、
-恢复 WAN 自动 DNS，并解除 DHCP 配置段的实例绑定。`warp_dns` 只负责 DNS，
-不会再次监听 UDP 67。
+LAN→warp forwarding；关闭 **Manage DNS** 会恢复 WAN 自动 DNS。受管 DNS
+只修改主 dnsmasq 的上游，不再创建第二个 dnsmasq 实例；Apply 还会清理
+r7/r8 遗留的 `warp_dns` 与 DHCP 实例绑定。
 
 ## 9. 命令行等价操作
 

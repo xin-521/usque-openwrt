@@ -13,8 +13,19 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  shell-tests:
+    name: shell tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Routing hook tests
+        run: sh tools/test_up_hook.sh
+      - name: Managed DNS regression test
+        run: sh tools/test_routing_dns.sh
+
   usque-apk:
     name: usque ${{ matrix.arch }}
+    needs: shell-tests
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -36,7 +47,7 @@ jobs:
           ref="${GITHUB_REF_NAME#v}"
           case "$ref" in
             *-r*) echo "ver=${ref%%-r*}" >> "$GITHUB_OUTPUT"; echo "rel=${ref##*-r}" >> "$GITHUB_OUTPUT" ;;
-            *)    echo "ver=4.2.1" >> "$GITHUB_OUTPUT"; echo "rel=8" >> "$GITHUB_OUTPUT" ;;
+            *)    echo "ver=4.2.1" >> "$GITHUB_OUTPUT"; echo "rel=9" >> "$GITHUB_OUTPUT" ;;
           esac
 
       - uses: actions/setup-go@v5
@@ -73,6 +84,7 @@ jobs:
 
   luci-apk:
     name: luci-app-usque noarch
+    needs: shell-tests
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4

@@ -23,7 +23,7 @@ BIN="$ROOT/dist/bin/usque-linux-${1:-arm64}"
 GOARCH=${1:-arm64}
 APKARCH=${2:-all}
 VER=${USQUE_VERSION:-4.2.1}
-REL=${USQUE_RELEASE:-8}
+REL=${USQUE_RELEASE:-9}
 OUT="$ROOT/dist/usque-${VER}-r${REL}.${APKARCH}.apk"
 
 APK_STATIC=${APK_STATIC:-}
