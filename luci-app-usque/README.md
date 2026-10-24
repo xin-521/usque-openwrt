@@ -6,7 +6,7 @@ OpenWrt 25.x（apk + LuCI 客户端 JS 视图）上管理 `usque`
 服务端文件（二进制、procd 服务、路由钩子、UCI 默认配置、路由助手）由同仓的
 `usque` 包提供；本包只包含：
 
-- LuCI 视图：状态页、设置页
+- LuCI 视图：状态、服务控制、出口检测、注册账户、日志、设置（共 6 页，菜单结构见下方）
 - ubus 对象 `luci.usque`（ucode 后端）
 - 菜单、ACL、首次安装时启用服务
 - 中文翻译
@@ -18,7 +18,9 @@ OpenWrt 25.x（apk + LuCI 客户端 JS 视图）上管理 `usque`
 ```
 luci-app-usque/
 ├── Makefile
-├── htdocs/luci-static/resources/view/usque/{overview,settings}.js
+├── htdocs/luci-static/resources/
+│   ├── usque/common.js                              # 各视图共用的 ubus 封装与格式化函数
+│   └── view/usque/{status,control,egress,register,logs,settings}.js
 ├── po/{templates/usque.pot,zh_Hans/usque.po}
 └── root/
     ├── etc/uci-defaults/95-luci-app-usque
@@ -28,6 +30,17 @@ luci-app-usque/
             ├── acl.d/luci-app-usque.json
             └── ucode/luci.usque
 ```
+
+菜单结构（`服务 → Usque WARP`，父节点用 `firstchild` 指向状态页）：
+
+| 顺序 | 菜单 | 路径 | 视图 |
+|------|------|------|------|
+| 1 | 状态 | `admin/services/usque/status` | `status.js` |
+| 2 | 服务控制 | `admin/services/usque/control` | `control.js` |
+| 3 | 出口检测 | `admin/services/usque/egress` | `egress.js` |
+| 4 | 注册账户 | `admin/services/usque/register` | `register.js` |
+| 5 | 日志 | `admin/services/usque/logs` | `logs.js` |
+| 6 | 设置 | `admin/services/usque/settings` | `settings.js` |
 
 ## 构建与安装
 
@@ -56,7 +69,7 @@ APK_STATIC=/path/to/apk.static sh tools/build-luci-apk.sh noarch
 
 ```sh
 apk add --allow-untrusted usque-4.2.1-r4.<arch>.apk \
-                       luci-app-usque-1.1.3-r1.noarch.apk
+                       luci-app-usque-1.2.0-r1.noarch.apk
 /etc/init.d/rpcd restart
 rm -rf /tmp/luci-*
 ```
@@ -90,7 +103,13 @@ ubus call luci.usque stat '{}'
 
 说明：
 
-- `stat` 不做网络请求，前端每 10 秒轮询一次。
+- `stat` 不做网络请求，状态页每 10 秒轮询一次。
+- **参数类型（易错点）**：rpcd 的 ucode 插件把 `args` 里每个参数的**取值**当作 ubus
+  类型提示——整数→`BLOBMSG_TYPE_INT32`、布尔→`INT8`、表→`TABLE`、其他→`STRING`。
+  因此 `logs` 必须声明成 `args: { lines: 32 }`；写成 `'int'`（字符串）会注册为 String，
+  浏览器发来的 `{"lines":200}` 在进入函数前就被 rpcd 以 `UBUS_STATUS_INVALID_ARGUMENT`
+  拒绝（这就是 1.2.0 修掉的“日志页永远空白”）。未在 `args` 中声明的参数同样会被
+  拒绝（`ubus_rpc_session` 除外）。
 - `register` 每次都会先把旧文件改名为 `config.json.bak` 再注册，失败自动还原；
   没有旧配置时失败会删除半成品。这样 `usque register` 不会停在
   “Do you want to overwrite it? (y/n)” 提示上。

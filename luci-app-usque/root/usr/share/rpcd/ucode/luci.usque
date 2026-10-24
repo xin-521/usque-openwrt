@@ -276,7 +276,7 @@ function route_info(iface) {
 }
 
 function tail_logs(count) {
-	let n = count || 100;
+	let n = int(count || 100);
 	if (n < 1)
 		n = 1;
 	if (n > 1000)
@@ -392,9 +392,17 @@ const methods = {
 	},
 
 	logs: {
-		args: { lines: 'int' },
+		// NOTE: rpcd's ucode plugin reads the *value* of each argument
+		// declaration as the ubus type hint: an integer (e.g. 32) selects
+		// BLOBMSG_TYPE_INT32, while a string such as 'int' selects
+		// BLOBMSG_TYPE_STRING.  With the string form every browser call
+		// {"lines":200} was rejected with "Invalid argument" before it
+		// reached this function, which is why the LuCI log page was
+		// always empty.  Keep this numeric.
+		args: { lines: 32 },
 		call: function(request) {
-			return tail_logs(request.args.lines);
+			let args = request.args || {};
+			return tail_logs(args.lines);
 		}
 	},
 
@@ -473,7 +481,7 @@ const methods = {
 	},
 
 	register: {
-		args: { name: 'string', jwt: 'string', overwrite: 'bool' },
+		args: { name: 'string', jwt: 'string' },
 		call: function(request) {
 			if (!access(PROG, 'x'))
 				return { ok: false, error: 'binary-missing' };

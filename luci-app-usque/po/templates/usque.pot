@@ -136,6 +136,12 @@ msgstr ""
 msgid "License key"
 msgstr ""
 
+msgid "Lines"
+msgstr ""
+
+msgid "Loading…"
+msgstr ""
+
 msgid "Logs"
 msgstr ""
 
@@ -247,6 +253,9 @@ msgstr ""
 msgid "Registration"
 msgstr ""
 
+msgid "Registration & Account"
+msgstr ""
+
 msgid "Registration failed: %s"
 msgstr ""
 
@@ -295,6 +304,9 @@ msgstr ""
 msgid "Settings"
 msgstr ""
 
+msgid "Shows the last syslog entries that mention usque, including procd and the connect/disconnect hooks. The list refreshes every 10 seconds and can be paged back with Lines."
+msgstr ""
+
 msgid "Start"
 msgstr ""
 
@@ -338,6 +350,12 @@ msgid "The routing helper /usr/libexec/usque-routing is missing."
 msgstr ""
 
 msgid "The service is disabled in Settings. Enable it there first."
+msgstr ""
+
+msgid "The service is not started on boot unless \"Enable on boot\" has been used at least once."
+msgstr ""
+
+msgid "The table refreshes every 10 seconds while this page is open."
 msgstr ""
 
 msgid "The tunnel MTU; 1280 is the only supported value."

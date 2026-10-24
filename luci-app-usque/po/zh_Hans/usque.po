@@ -136,6 +136,12 @@ msgstr "保活周期（秒）"
 msgid "License key"
 msgstr "许可密钥"
 
+msgid "Lines"
+msgstr "行数"
+
+msgid "Loading…"
+msgstr "加载中…"
+
 msgid "Logs"
 msgstr "日志"
 
@@ -247,6 +253,9 @@ msgstr "注册新的 WARP 设备并写入配置文件。现有配置会自动备
 msgid "Registration"
 msgstr "注册"
 
+msgid "Registration & Account"
+msgstr "注册账户"
+
 msgid "Registration failed: %s"
 msgstr "注册失败：%s"
 
@@ -295,6 +304,9 @@ msgstr "设置许可"
 msgid "Settings"
 msgstr "设置"
 
+msgid "Shows the last syslog entries that mention usque, including procd and the connect/disconnect hooks. The list refreshes every 10 seconds and can be paged back with Lines."
+msgstr "显示最近提及 usque 的系统日志（含 procd 与连接/断开钩子）。列表每 10 秒自动刷新，可用“行数”回看更多内容。"
+
 msgid "Start"
 msgstr "启动"
 
@@ -339,6 +351,12 @@ msgstr "路由助手 /usr/libexec/usque-routing 不存在。"
 
 msgid "The service is disabled in Settings. Enable it there first."
 msgstr "服务已在设置中禁用，请先在设置里启用。"
+
+msgid "The service is not started on boot unless \"Enable on boot\" has been used at least once."
+msgstr "除非执行过“开机自启”，否则服务不会随开机启动。"
+
+msgid "The table refreshes every 10 seconds while this page is open."
+msgstr "页面打开期间每 10 秒自动刷新。"
 
 msgid "The tunnel MTU; 1280 is the only supported value."
 msgstr "隧道 MTU，仅支持 1280。"

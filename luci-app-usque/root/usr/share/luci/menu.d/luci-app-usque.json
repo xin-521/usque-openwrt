@@ -3,8 +3,62 @@
 		"title": "Usque WARP",
 		"order": 90,
 		"action": {
+			"type": "firstchild"
+		},
+		"depends": {
+			"acl": [ "luci-app-usque" ]
+		}
+	},
+	"admin/services/usque/status": {
+		"title": "Status",
+		"order": 10,
+		"action": {
 			"type": "view",
-			"path": "usque/overview"
+			"path": "usque/status"
+		},
+		"depends": {
+			"acl": [ "luci-app-usque" ]
+		}
+	},
+	"admin/services/usque/control": {
+		"title": "Service control",
+		"order": 20,
+		"action": {
+			"type": "view",
+			"path": "usque/control"
+		},
+		"depends": {
+			"acl": [ "luci-app-usque" ]
+		}
+	},
+	"admin/services/usque/egress": {
+		"title": "Egress check",
+		"order": 30,
+		"action": {
+			"type": "view",
+			"path": "usque/egress"
+		},
+		"depends": {
+			"acl": [ "luci-app-usque" ]
+		}
+	},
+	"admin/services/usque/register": {
+		"title": "Registration & Account",
+		"order": 40,
+		"action": {
+			"type": "view",
+			"path": "usque/register"
+		},
+		"depends": {
+			"acl": [ "luci-app-usque" ]
+		}
+	},
+	"admin/services/usque/logs": {
+		"title": "Logs",
+		"order": 50,
+		"action": {
+			"type": "view",
+			"path": "usque/logs"
 		},
 		"depends": {
 			"acl": [ "luci-app-usque" ]
@@ -12,7 +66,7 @@
 	},
 	"admin/services/usque/settings": {
 		"title": "Settings",
-		"order": 10,
+		"order": 60,
 		"action": {
 			"type": "view",
 			"path": "usque/settings"

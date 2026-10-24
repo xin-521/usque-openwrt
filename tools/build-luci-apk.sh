@@ -20,7 +20,7 @@ ROOT=$(cd "$HERE/.." && pwd)
 SRC="$ROOT/luci-app-usque"
 
 NAME=luci-app-usque
-VER=1.1.3
+VER=1.2.0
 REL=1
 # apk v3 uses "noarch" for architecture-independent packages; "all" is not
 # a valid apk arch and makes the package uninstallable.

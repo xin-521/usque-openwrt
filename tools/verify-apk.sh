@@ -24,7 +24,7 @@ fi
 
 need=""
 [ "$KIND" = usque ] && need="usr/bin/usque etc/init.d/usque etc/config/usque etc/usque/up.sh etc/usque/down.sh etc/usque/options.sh etc/sysctl.d/90-usque.conf usr/libexec/usque-routing"
-[ "$KIND" = luci ] && need="usr/share/rpcd/ucode/luci.usque usr/share/luci/menu.d/luci-app-usque.json usr/share/rpcd/acl.d/luci-app-usque.json etc/uci-defaults/95-luci-app-usque www/luci-static/resources/view/usque/overview.js www/luci-static/resources/view/usque/settings.js usr/lib/lua/luci/i18n/usque.zh-cn.lmo"
+[ "$KIND" = luci ] && need="usr/share/rpcd/ucode/luci.usque usr/share/luci/menu.d/luci-app-usque.json usr/share/rpcd/acl.d/luci-app-usque.json etc/uci-defaults/95-luci-app-usque www/luci-static/resources/usque/common.js www/luci-static/resources/view/usque/status.js www/luci-static/resources/view/usque/control.js www/luci-static/resources/view/usque/egress.js www/luci-static/resources/view/usque/register.js www/luci-static/resources/view/usque/logs.js www/luci-static/resources/view/usque/settings.js usr/lib/lua/luci/i18n/usque.zh-cn.lmo"
 [ -n "$need" ] || { echo "unknown kind $KIND" >&2; exit 1; }
 
 for f in $need; do

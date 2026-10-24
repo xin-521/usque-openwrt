@@ -3,7 +3,8 @@
 本文只讲 **LuCI 界面**用法。安装包、构建与 ubus API 详见
 [`luci-app-usque/README.md`](../luci-app-usque/README.md)。
 
-菜单入口：**服务 → Usque WARP**（`/cgi-bin/luci/admin/services/usque`）。
+菜单入口：**服务 → Usque WARP**（`/cgi-bin/luci/admin/services/usque`），
+下分 6 个页面：状态 / 服务控制 / 出口检测 / 注册账户 / 日志 / 设置。
 
 > usque 把整机流量经 MASQUE 送进 Cloudflare WARP。启用前先确认路由器能上网，
 > 并且你接受流量经过 Cloudflare。
@@ -15,7 +16,7 @@
 ```sh
 cd /tmp
 apk add --allow-untrusted ./usque-4.2.1-r4.<你的架构>.apk
-apk add --allow-untrusted ./luci-app-usque-1.1.3-r1.noarch.apk
+apk add --allow-untrusted ./luci-app-usque-1.2.0-r1.noarch.apk
 /etc/init.d/rpcd restart
 rm -rf /tmp/luci-*
 ```
@@ -26,19 +27,19 @@ rm -rf /tmp/luci-*
 
 ## 2. 首次使用顺序
 
-1. 打开 **服务 → Usque WARP**。
-2. 在 **Registration** 填设备名（默认 `openwrt-router`），点 **Register**。
-3. 等状态页 **Configuration file** 显示 `present`。
-4. 打开 **Settings**，确认接口名、metric 等，点 **Save & Apply**。
-5. 在同一页点 **Apply routing**，安装接口、路由、防火墙和 DNS。
-6. 点 **Start**，状态页确认 **Service = Running**、**Interface = Up**。
-7. 用 **Egress check** 验证出口 IP 已变成 Cloudflare。
+1. 打开 **服务 → Usque WARP**，首屏是 **状态**（只读），每 10 秒自动刷新。
+2. 到 **注册账户** 填设备名（默认 `openwrt-router`），点 **Register**。
+3. 回到 **状态**，确认 **Configuration file** 显示 `present`。
+4. 打开 **设置**，确认接口名、metric 等，点 **Save & Apply**。
+5. 还在 **设置** 页点 **Apply routing**，安装接口、路由、防火墙和 DNS。
+6. 到 **服务控制** 点 **Start**，状态页确认 **Service = Running**、**Interface = Up**。
+7. 用 **出口检测** 验证出口 IP 已变成 Cloudflare；有异常就到 **日志** 看输出。
 
 免费 WARP 账户可直接注册；Zero Trust 团队在注册时填 Team token（JWT）。
 
-## 3. 状态页
+## 3. 状态页（Status）
 
-每 10 秒自动刷新，只读，不发网络请求（Egress check 除外）。
+每 10 秒自动刷新，只读，只调用 `stat`（不发网络请求）。
 
 | 字段 | 含义 |
 |------|------|
@@ -52,10 +53,59 @@ rm -rf /tmp/luci-*
 | Physical (WAN) default route | 物理 WAN 后备路由；严格模式下为空 |
 | Egress self-test | `ip route get` 结果，`through tunnel` 才正常 |
 
-状态页同时提供 **Start / Stop / Restart / Enable on boot / Disable on boot**。
-停止会撤掉隧道路由，流量按 metric 回落到 WAN（严格模式除外）。
+状态页本身不带操作按钮，启停与自启在 **服务控制** 页。
 
-## 4. 设置页
+## 4. 服务控制页（Service control）
+
+页面顶部同样显示 Service / Start on boot / Interface，点按钮后立即刷新。
+
+| 按钮 | 等价命令 | 说明 |
+|------|----------|------|
+| Start | `/etc/init.d/usque start` | `enabled=0` 时拒绝，提示去设置页启用 |
+| Stop | `/etc/init.d/usque stop` | 会二次确认；隧道路由被撤掉，流量按 metric 回落到 WAN（严格模式除外） |
+| Restart | `/etc/init.d/usque restart` | 改完设置后重建连接 |
+| Enable on boot | `/etc/init.d/usque enable` | 生成 `/etc/rc.d/S95usque`，重启后自启 |
+| Disable on boot | `/etc/init.d/usque disable` | 取消自启（不影响当前运行） |
+
+> 服务不会随开机自启，除非至少点过一次 **Enable on boot**；重装包也不会自动自启。
+
+## 5. 出口检测页（Egress check）
+
+- 默认填当前隧道接口，可手改（接口名白名单 `[A-Za-z0-9._-]`，≤15 字符）。
+- 请求 `https://www.cloudflare.com/cdn-cgi/trace`，显示 `ip / warp / loc / colo`。
+- `warp=on` 且 IP 不是本地公网才算成功；依赖 `curl` 或 `uclient-fetch`。
+
+## 6. 注册与账户页（Registration & Account）
+
+### Registration
+
+- 设备名只允许字母、数字、`.`、`-`、`_`，最长 64。
+- Team token（可选）可以粘贴三种形式，程序会自动提取其中的 JWT：
+  1. 裸 token：`eyJhbGciOi...`；
+  2. 完整登录链接：`com.cloudflare.warp://<team>.cloudflareaccess.com/auth?token=...`；
+  3. 控制台给的整段 `<meta http-equiv="refresh" content="0;url=...token=...">`。
+- 已有配置会自动改名为 `config.json.bak`，然后重新注册；注册失败自动还原。
+  不再需要勾选“覆盖”，也不会再卡在 `(y/n)` 提示上。
+- 注册要访问 `api.cloudflareclient.com`，可能耗时一分钟。
+
+### Account
+
+需要已有配置和网络：
+
+- **Account info / Devices**：查看账户与已注册设备。
+- **Set license**：填入许可密钥（`xxxxxxxx-xxxxxxxx-xxxxxxxx`）。
+- **Reset license**：清除密钥。
+
+## 7. 日志页（Logs）
+
+- 内容：`logread -e usque`，即所有提到 usque 的 syslog 行（含 procd 与
+  `usque-hook` 的连接/断开钩子输出）。
+- **Lines**：100 / 200 / 500 / 1000，默认 200，改完自动重拉。
+- 每 10 秒自动刷新，也可点 **Refresh** 手动拉。
+- 日志为空只有两种可能：服务没在跑（`/etc/init.d/usque status`），或日志缓冲
+  （`logd`）里确实还没有相关行。后端出错时会显示明确的错误文字，不会静默留白。
+
+## 8. 设置页（Settings）
 
 保存会提交 `/etc/config/usque` 并由 procd 重载服务。
 
@@ -90,35 +140,7 @@ rm -rf /tmp/luci-*
 **Apply routing** 才真正写入 network/firewall/dhcp 并重载；只保存不点不会生效。
 **Revert routing** 会先停 usque，再删除上述 UCI 条目并重载。
 
-## 5. 注册与账户
-
-### Registration
-
-- 设备名只允许字母、数字、`.`、`-`、`_`，最长 64。
-- Team token（可选）可以粘贴三种形式，程序会自动提取其中的 JWT：
-  1. 裸 token：`eyJhbGciOi...`；
-  2. 完整登录链接：`com.cloudflare.warp://<team>.cloudflareaccess.com/auth?token=...`；
-  3. 控制台给的整段 `<meta http-equiv="refresh" content="0;url=...token=...">`。
-- 已有配置会自动改名为 `config.json.bak`，然后重新注册；注册失败自动还原。
-  不再需要勾选“覆盖”，也不会再卡在 `(y/n)` 提示上。
-- 注册要访问 `api.cloudflareclient.com`，可能耗时一分钟。
-
-### Account
-
-需要已有配置和网络：
-
-- **Account info / Devices**：查看账户与已注册设备。
-- **Set license**：填入许可密钥（`xxxxxxxx-xxxxxxxx-xxxxxxxx`）。
-- **Reset license**：清除密钥。
-
-## 6. 出口检查与日志
-
-- **Egress check**：默认查当前隧道接口，请求 Cloudflare trace，显示
-  `ip / warp / loc / colo`。`warp=on` 且 IP 非本地公网才算成功。
-  依赖 `curl` 或 `uclient-fetch`。
-- **Logs**：最近 200 条 `logread -e usque`，点 **Refresh** 重新拉取。
-
-## 7. 命令行等价操作
+## 9. 命令行等价操作
 
 | 界面动作 | 命令 |
 |----------|------|
@@ -131,7 +153,7 @@ rm -rf /tmp/luci-*
 
 ubus 调用见 [`luci-app-usque/README.md`](../luci-app-usque/README.md#ubus-apiluciusque)。
 
-## 8. 排障
+## 10. 排障
 
 | 现象 | 处理 |
 |------|------|
@@ -139,6 +161,7 @@ ubus 调用见 [`luci-app-usque/README.md`](../luci-app-usque/README.md#ubus-api
 | `usque binary not found` | 先 `which usque`：存在则 `/etc/init.d/rpcd restart`（rpcd 只在启动时加载 `/usr/share/rpcd/ucode/luci.usque`，不重启时 ubus 对象 `luci.usque` 不存在，界面任何状态都取不到）；不存在再重装 `usque` 包并确认 `/usr/bin/usque` 可执行 |
 | 注册失败 `invalid-jwt` | 确认粘贴内容里有 `token=` 或直接粘贴裸 JWT；整段 `<meta>` 也可以 |
 | 服务启动即退 | 看 Logs；确认已注册、`kmod-tun` 已加载（`lsmod \| grep tun`） |
+| Logs 页空白 | 升级到 `luci-app-usque ≥ 1.2.0`：1.2.0 之前后端把 `logs` 的参数类型写成字符串 `'int'`，rpcd 注册成 String，浏览器发来的数字 `{"lines":200}` 会被 `UBUS_STATUS_INVALID_ARGUMENT` 拒掉；升级后仍空白说明服务没在跑（`/etc/init.d/usque status`），没跑就没有日志 |
 | 有接口但无法上网 | 查 IPv4 default route 是否指向隧道；先关 Strict 再试 |
 | 出口仍是本地 IP | 重新 Apply routing；确认 Egress self-test 为 through tunnel |
 | UDP/443 被封 | 设置里开 **Use HTTP/2 over TCP** |
@@ -147,7 +170,7 @@ ubus 调用见 [`luci-app-usque/README.md`](../luci-app-usque/README.md#ubus-api
 
 改完路由相关选项务必重新 **Apply routing**。`Save & Apply` 只提交 UCI。
 
-## 9. 卸载与还原
+## 11. 卸载与还原
 
 ```sh
 /etc/init.d/usque stop
