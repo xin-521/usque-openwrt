@@ -10,7 +10,12 @@ OpenWrt 25.x 的 usque（Cloudflare WARP / MASQUE）客户端与 LuCI 界面，�
 
 `<arch>` 与路由器 `apk info --print-arch` 一致；LuCI 包为 `noarch`。包未签名，安装需 `--allow-untrusted`。
 
-## 本次变更（r5）
+## 本次变更（r6）
+
+- 修复 LuCI 所有页面报 `TypeError: "usque.common" factory yields invalid constructor`：LuCI 客户端 `require()` 只接受返回 `L.Class` 子类的模块工厂（加载时用 `Class.isSubclass` 校验，失败即抛此错），而共享模块 `usque/common.js` 之前 `return {...}` 返回的是普通对象。状态、服务控制、出口检测、注册账户、日志等页面都会 `'require usque.common as usque'`，因此全部在加载该模块时中断。现改为 `return L.Class.extend({...})`，与官方共享模块 `tools/widgets.js`、`tools/views.js` 写法一致
+- LuCI 包版本 **1.2.0-r3**；usque 二进制与 r5 相同（本版仅含 LuCI 修复）
+
+## 上一版（r5）
 
 - LuCI 界面拆成 6 个独立页面（与「设置」同级）：**状态 / 服务控制 / 出口检测 / 注册账户 / 日志 / 设置**。启停与开机自启集中在「服务控制」页；日志独立成页，带行数选择（100/200/500/1000）与 10 秒自动刷新；注册与账户合并为一页
 - 修复「日志页永远空白」：后端 `logs` 的 ubus 参数类型声明错误（写成字符串 `'int'`，rpcd 会按 String 注册），浏览器发来的 `{"lines":200}` 在进入函数前就被 `UBUS_STATUS_INVALID_ARGUMENT` 拒掉，前端又把错误吞成「暂无日志」。改为 int32 后日志正常显示，出错也会显示明确提示而不是留白

@@ -127,7 +127,7 @@ function note(text) {
 	return E('p', { 'class': 'cbi-section-descr' }, text);
 }
 
-return {
+return L.Class.extend({
 	callStat: callStat,
 	callControl: callControl,
 	callLogs: callLogs,
@@ -141,4 +141,4 @@ return {
 	row: row,
 	button: button,
 	note: note
-};
+});

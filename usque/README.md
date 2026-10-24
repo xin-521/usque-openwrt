@@ -59,7 +59,7 @@ APK_STATIC=/path/to/apk.static sh tools/build-usque-apk.sh arm64 aarch64_cortex-
 ## 安装与启用
 
 ```sh
-apk add --allow-untrusted usque-4.2.1-r5.<arch>.apk
+apk add --allow-untrusted usque-4.2.1-r6.<arch>.apk
 /etc/init.d/usque enable
 /etc/init.d/usque start
 ```
