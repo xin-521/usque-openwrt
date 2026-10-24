@@ -94,6 +94,8 @@ physical_endpoint_route() {
 logical_interface() {
 	local dev="$1" section candidate
 
+	# network.sh is not nounset-safe; this function runs in command substitution.
+	set +u
 	[ -r /lib/functions/network.sh ] && . /lib/functions/network.sh
 	for section in $(uci -X show network 2>/dev/null |
 		sed -n 's/^network\.\([^.=]*\)=interface$/\1/p'); do
@@ -105,6 +107,21 @@ logical_interface() {
 	done
 
 	printf 'wan'
+}
+
+remove_physical_defaults() {
+	local fam="$1" dev
+
+	for dev in $(ip -"$fam" route show default 2>/dev/null | awk -v t="$IFACE" '
+		{
+			dev = ""
+			for (i = 1; i <= NF; i++)
+				if ($i == "dev") dev = $(i + 1)
+			if (dev != "" && dev != t) print dev
+		}' | sort -u); do
+		echo "  strict mode: remove IPv$fam default route on $dev"
+		ip -"$fam" route flush default dev "$dev" 2>/dev/null
+	done
 }
 
 json_value() {
@@ -324,6 +341,10 @@ apply() {
 
 	say "reloading network, firewall and dnsmasq"
 	/etc/init.d/network reload
+	if [ "$STRICT" = 1 ]; then
+		remove_physical_defaults 4
+		remove_physical_defaults 6
+	fi
 	/etc/init.d/firewall reload
 	if [ "$MDNS" = 1 ] && [ -x /etc/init.d/dnsmasq ]; then
 		/etc/init.d/dnsmasq reload

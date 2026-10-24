@@ -58,6 +58,7 @@ run() { # $1=描述
     CALLS="$LOG" PATH="$MOCK:$PATH" \
     USQUE_EVENT=connect USQUE_MODE=nativetun USQUE_IFACE=warp0 \
     USQUE_ENDPOINT="$EP" USQUE_IPV4=172.16.0.2 USQUE_IPV6=2606:4700:103::1 \
+    USQUE_STRICT="$STRICT" \
     MOCK_V4_DEFAULT="$V4D" MOCK_V6_DEFAULT="$V6D" MOCK_FAIL_REPLACE="$FAILREPL" \
     MOCK_GET_V4="$MOCK_GET_V4" MOCK_ENDPOINT_ROUTE="$MOCK_ENDPOINT_ROUTE" \
         sh "$UP" || echo "up.sh 退出码=$?"
@@ -91,6 +92,7 @@ run "场景4: 无物理默认路由 → 安全退出"
 V4D=''
 V6D=''
 EP='162.159.197.2:443'; FAILREPL=''
+STRICT=1
 MOCK_ENDPOINT_ROUTE='162.159.197.2 via 192.168.1.1 dev eth0 src 192.168.1.100'
 run "场景5: 严格模式使用端点 host route 推导 WAN"
 if ! grep -q "162.159.197.2/32 via 192.168.1.1 dev eth0" "$LOG" ||
@@ -99,12 +101,23 @@ if ! grep -q "162.159.197.2/32 via 192.168.1.1 dev eth0" "$LOG" ||
     exit 1
 fi
 
-# 场景 6：WAN metric=0（未按指南设置）→ 应打印警告
+# 场景 6：严格模式删除残留的物理默认路由（包括显式 route6）
+V4D='default via 192.168.1.1 dev eth0 metric 0'
+V6D='default via fe80::1 dev eth0 metric 1024'
+EP='162.159.198.1:443'; FAILREPL=''
+run "场景6: 严格模式删除 WAN 默认路由"
+if ! grep -q "route flush default dev eth0" "$LOG"; then
+    echo "FAIL: 严格模式未删除物理默认路由" >&2
+    exit 1
+fi
+STRICT=0
+
+# 场景 7：WAN metric=0（未按指南设置）→ 应打印警告
 V4D='default via 192.168.1.1 dev eth0 metric 0'
 V6D=''
 EP='162.159.198.1:443'; FAILREPL=''
 MOCK_GET_V4='1.1.1.1 via 192.168.1.1 dev eth0 src 192.168.1.100'
-run "场景6: WAN metric=0 → 自检应告警"
+run "场景7: WAN metric=0 → 自检应告警"
 MOCK_GET_V4=''
 MOCK_ENDPOINT_ROUTE=''
 

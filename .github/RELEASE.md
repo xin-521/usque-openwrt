@@ -10,7 +10,18 @@ OpenWrt 25.x 的 usque（Cloudflare WARP / MASQUE）客户端与 LuCI 界面，�
 
 `<arch>` 与路由器 `apk info --print-arch` 一致；LuCI 包为 `noarch`。包未签名，安装需 `--allow-untrusted`。
 
-## 本次变更（r7）
+## 本次变更（r8）
+
+- 修复状态页 uptime 仍显示 0：ucode 的 `int()` 不接受 `/proc/uptime`
+  的小数文本，现在先截取整数部分再计算
+- 修复 Strict mode 下显式 `network.@route6[0]` 在 `network reload` 后被
+  重新添加的问题；应用配置、服务启动和连接钩子都会清理非隧道接口的
+  IPv4/IPv6 默认路由
+- 修复路由 helper 在 `set -u` 下无法识别逻辑接口的问题；端点 host route
+  现在会正确写入 `interface wan`，Strict 模式重连后可正常恢复
+- usque **4.2.1-r8**；LuCI **1.2.0-r5**
+
+## 上一版（r7）
 
 - 修复 Strict mode 开局断网：Apply 时先为当前 WARP 端点写入仅走 WAN 的
   host route（`network.usque_warp_ep4/6`），再移除 WAN 默认路由；`up.sh`

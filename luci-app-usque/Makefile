@@ -7,7 +7,7 @@ LUCI_PKGARCH:=all
 LUCI_LANG.zh_Hans:=简体中文
 
 PKG_VERSION:=1.2.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_LICENSE:=Apache-2.0
 PKG_MAINTAINER:=usque-openwrt contributors
 

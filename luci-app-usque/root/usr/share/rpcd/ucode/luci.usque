@@ -137,12 +137,19 @@ function process_uptime(pid) {
 	if (up.code != 0 || started.code != 0)
 		return 0;
 
+	// ucode int() accepts integer strings, not the fractional value from
+	// /proc/uptime, so drop the decimal part explicitly.
+	let uptime = trim(up.out);
+	let dot = index(uptime, '.');
+	if (dot >= 0)
+		uptime = substr(uptime, 0, dot);
+
 	let hz = run('getconf CLK_TCK 2>/dev/null');
-	let ticks = int(hz.out);
+	let ticks = hz.code == 0 ? int(trim(hz.out)) : 0;
 	if (ticks <= 0)
 		ticks = 100;
 
-	let seconds = int(up.out) - int(int(started.out) / ticks);
+	let seconds = int(uptime) - int(int(started.out) / ticks);
 	return seconds > 0 ? seconds : 0;
 }
 

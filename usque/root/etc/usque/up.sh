@@ -27,6 +27,7 @@ IFACE="${USQUE_IFACE:-warp0}"
 ENDPOINT="${USQUE_ENDPOINT:-}"
 TUN_METRIC="${USQUE_TUN_METRIC:-10}"
 WAN_METRIC="${USQUE_WAN_METRIC:-250}"
+STRICT="${USQUE_STRICT:-0}"
 
 log() { logger -t usque-hook "[connect] $*"; }
 
@@ -55,6 +56,20 @@ wan_endpoint_route() {
             }
             if (dev != "" && dev != t) { print dev " " gw; exit }
         }'
+}
+
+remove_wan_defaults() {
+    fam="$1"
+    for dev in $(ip -"$fam" route show default 2>/dev/null | awk -v t="$IFACE" '
+        {
+            dev = ""
+            for (i = 1; i <= NF; i++)
+                if ($i == "dev") dev = $(i + 1)
+            if (dev != "" && dev != t) print dev
+        }' | sort -u); do
+        log "严格模式: 删除 $dev 上的 IPv$fam 默认路由"
+        ip -"$fam" route flush default dev "$dev" 2>/dev/null
+    done
 }
 
 # ---------------------------------------------------------------------------
@@ -116,6 +131,11 @@ else
     ip -6 route del default dev "$IFACE" 2>/dev/null
     ip -6 route add default dev "$IFACE" metric "$TUN_METRIC" 2>/dev/null \
         || log "提示: IPv6 默认路由未设置（隧道内可能没启用 IPv6，忽略）"
+fi
+
+if [ "$STRICT" = 1 ]; then
+    remove_wan_defaults 4
+    remove_wan_defaults 6
 fi
 
 # ---------------------------------------------------------------------------

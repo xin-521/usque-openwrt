@@ -23,7 +23,7 @@ BIN="$ROOT/dist/bin/usque-linux-${1:-arm64}"
 GOARCH=${1:-arm64}
 APKARCH=${2:-all}
 VER=${USQUE_VERSION:-4.2.1}
-REL=${USQUE_RELEASE:-7}
+REL=${USQUE_RELEASE:-8}
 OUT="$ROOT/dist/usque-${VER}-r${REL}.${APKARCH}.apk"
 
 APK_STATIC=${APK_STATIC:-}
@@ -117,5 +117,5 @@ echo "文件清单（$PKG）："
 (cd "$PKG" && ls -1R)
 echo
 echo "安装（与 LuCI 包一起，示例）："
-echo "  apk add --allow-untrusted $OUT $ROOT/dist/luci-app-usque-1.2.0-r4.noarch.apk"
+echo "  apk add --allow-untrusted $OUT $ROOT/dist/luci-app-usque-1.2.0-r5.noarch.apk"
 echo "  /etc/init.d/rpcd restart && rm -rf /tmp/luci-*"
